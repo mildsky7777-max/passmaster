@@ -4230,11 +4230,21 @@ onAuthStateChanged(fbAuth, user => {
 let syncBlobId = ''; // 더 이상 사용 안 함
 
 function getSyncPayload() {
+    // bank에서 진도 데이터만 추출 (문제/해설 텍스트 제외 → 용량 절약)
+    const bankProgress = bank.map(q => ({
+        id: q.id,
+        correct: q.correct,
+        wrong: q.wrong,
+        bookmark: q.bookmark,
+        memo: q.memo || '',
+        sr: q.sr || null,
+        lastSeen: q.lastSeen || null
+    }));
     return {
-        version: '81',
+        version: '88',
         ts: Date.now(),
         date: new Date().toISOString(),
-        bank: bank,
+        bankProgress: bankProgress,
         wrongArchive: wrongArchive,
         userStats: userStats,
         heatmapData: heatmapData
@@ -4242,7 +4252,23 @@ function getSyncPayload() {
 }
 
 function applySyncPayload(json) {
-    if (json.bank)         { bank = json.bank; }
+    // 진도 데이터만 bank에 병합
+    if (json.bankProgress && bank.length > 0) {
+        const map = {};
+        json.bankProgress.forEach(p => { if(p.id !== undefined) map[p.id] = p; });
+        bank = bank.map((q, i) => {
+            const p = map[q.id !== undefined ? q.id : i];
+            if (!p) return q;
+            return Object.assign({}, q, {
+                correct: p.correct, wrong: p.wrong,
+                bookmark: p.bookmark, memo: p.memo || '',
+                sr: p.sr || q.sr, lastSeen: p.lastSeen || q.lastSeen
+            });
+        });
+    } else if (json.bank) {
+        // 구버전 호환
+        bank = json.bank;
+    }
     if (json.wrongArchive) { wrongArchive = json.wrongArchive; }
     if (json.userStats)    { userStats = json.userStats; }
     if (json.heatmapData)  { heatmapData = json.heatmapData; }
