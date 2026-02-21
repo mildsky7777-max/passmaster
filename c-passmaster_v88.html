@@ -4231,11 +4231,11 @@ let syncBlobId = ''; // 더 이상 사용 안 함
 
 function getSyncPayload() {
     // bank에서 진도 데이터만 추출 (문제/해설 텍스트 제외 → 용량 절약)
-    const bankProgress = bank.map(q => ({
-        id: q.id,
-        correct: q.correct,
-        wrong: q.wrong,
-        bookmark: q.bookmark,
+    const bankProgress = bank.map((q, i) => ({
+        id: q.id !== undefined ? q.id : i,
+        correct: q.correct || 0,
+        wrong: q.wrong || 0,
+        bookmark: q.bookmark || false,
         memo: q.memo || '',
         sr: q.sr || null,
         lastSeen: q.lastSeen || null
