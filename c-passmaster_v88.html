@@ -447,6 +447,7 @@ input,textarea,button,select { font-family: inherit; }
 .chip-book    { background: #FEF3C7; color: #B45309; }
 .chip-book.chip-on    { background: #B45309; color: white; }
 .chip-unread  { background: var(--primary-light); color: var(--primary); }
+.chip-unsolved { background: #FFF7ED; color: #C2410C; }
 .chip-unread.chip-on  { background: var(--primary); color: white; }
 .chip-review  { background: #FFF7ED; color: #C2410C; }
 .chip-review.chip-on  { background: #C2410C; color: white; }
@@ -1814,6 +1815,7 @@ body { transition: background 0.3s, color 0.3s; }
                 <button class="chip chip-wrong"   id="btnWrong"    onclick="toggleFilter('wrong')">❌ 오답<span class="chip-badge" id="badgeWrong" style="display:none"></span></button>
                 <button class="chip chip-book"    id="btnBookmark" onclick="toggleFilter('bookmark')">⭐ 북마크<span class="chip-badge" id="badgeBookmark" style="display:none"></span></button>
                 <button class="chip chip-unread"  id="btnUnread"   onclick="toggleFilter('unread')">👁 안읽음<span class="chip-badge" id="badgeUnread" style="display:none"></span></button>
+                <button class="chip chip-unsolved" id="btnUnsolved" onclick="toggleFilter('unsolved')">✏️ 안푼문제<span class="chip-badge" id="badgeUnsolved" style="display:none"></span></button>
                 <button class="chip chip-review"  id="btnReview"   onclick="toggleFilter('review')">📅 망각곡선 복습<span class="chip-badge" id="badgeReview" style="display:none"></span></button>
                 <button class="chip chip-retry"   id="btnRetryMode" onclick="toggleFilter('retry')" style="display:none">🔄 재도전<span class="chip-badge" id="badgeRetry" style="display:none"></span></button>
             </div>
@@ -2509,6 +2511,7 @@ function applyFilter() {
         if(currentFilter==='wrong' && q.my_status!=='wrong') ok=false;
         if(currentFilter==='bookmark' && !q.bookmark) ok=false;
         if(currentFilter==='unread' && q.isViewed) ok=false;
+        if(currentFilter==='unsolved' && q.my_status) ok=false;
         if(currentFilter==='review' && !isSRDue(q)) ok=false;
         if(currentFilter==='retry' && !retrySet.has(idx)) ok=false;
         if(keyword){
@@ -2569,6 +2572,7 @@ function updateUI() {
     const modeBadge = document.getElementById('modeStatusBadge');
     if(currentFilter==='wrong'){ modeBadge.innerText='오답노트'; modeBadge.style.cssText='display:inline-block;background:var(--danger-light);color:var(--danger);padding:3px 7px;border-radius:7px;font-size:0.72em;font-weight:700'; }
     else if(currentFilter==='retry'){ modeBadge.innerText='🔄 재도전'; modeBadge.style.cssText='display:inline-block;background:linear-gradient(135deg,#EF4444,#F97316);color:white;padding:3px 7px;border-radius:7px;font-size:0.72em;font-weight:700'; }
+    else if(currentFilter==='unsolved'){ modeBadge.innerText='✏️ 안푼문제'; modeBadge.style.cssText='display:inline-block;background:#FFF7ED;color:#C2410C;padding:3px 7px;border-radius:7px;font-size:0.72em;font-weight:700'; }
     else if(currentFilter==='unread'){ modeBadge.innerText='👁 안읽음'; modeBadge.style.cssText='display:inline-block;background:var(--primary-light);color:var(--primary);padding:3px 7px;border-radius:7px;font-size:0.72em;font-weight:700'; }
     else if(currentFilter==='review'){ modeBadge.innerText='📅 복습'; modeBadge.style.cssText='display:inline-block;background:var(--warning-light);color:#92400E;padding:3px 7px;border-radius:7px;font-size:0.72em;font-weight:700'; }
     else if(isShuffleMode){ modeBadge.innerText='🧠 스마트 셔플'; modeBadge.style.cssText='display:inline-block;background:var(--primary-light);color:var(--primary);padding:3px 7px;border-radius:7px;font-size:0.72em;font-weight:700'; }
@@ -2821,7 +2825,7 @@ function toggleFilter(f) {
     ['btnWrong','btnBookmark','btnUnread','btnReview','btnRetryMode'].forEach(id=>{
         const el=document.getElementById(id); if(el) el.classList.remove('chip-on');
     });
-    const filterMap={wrong:'btnWrong',bookmark:'btnBookmark',unread:'btnUnread',review:'btnReview',retry:'btnRetryMode'};
+    const filterMap={wrong:'btnWrong',bookmark:'btnBookmark',unread:'btnUnread',unsolved:'btnUnsolved',review:'btnReview',retry:'btnRetryMode'};
     if(filterMap[currentFilter]) document.getElementById(filterMap[currentFilter])?.classList.add('chip-on');
 
     if(currentFilter==='wrong'){
@@ -2829,6 +2833,9 @@ function toggleFilter(f) {
         showToast(c>0?'❌ 오답노트: '+c+'문제':'오답 문제가 없습니다.',c>0?null:'success');
     } else if(currentFilter==='retry'){
         showToast('🔄 재도전 모드: '+retrySet.size+'문제');
+    } else if(currentFilter==='unsolved'){
+        const c=bank.filter(q=>!q.my_status&&activeTags.has(q.tag||'기타')&&activeSubjects.has(q.subject||'미분류(공통)')).length;
+        showToast(`✏️ 안푼문제 ${c}개`, 'info');
     } else if(currentFilter==='unread'){
         const c=bank.filter(q=>!q.isViewed&&activeTags.has(q.tag||'기타')&&activeSubjects.has(q.subject||'미분류(공통)')).length;
         showToast('👁 안읽음 '+c+'문제');
@@ -3074,6 +3081,7 @@ function updateBadges() {
     setBadge('badgeWrong', bank.filter(q=>q.my_status==='wrong'&&visible(q)).length);
     setBadge('badgeBookmark', bank.filter(q=>q.bookmark&&visible(q)).length);
     setBadge('badgeUnread', bank.filter(q=>!q.isViewed&&visible(q)).length);
+    setBadge('badgeUnsolved', bank.filter(q=>!q.my_status&&visible(q)).length);
     setBadge('badgeReview', getSRDueCount());
     setBadge('badgeRetry', retrySet.size);
     updateRetryChip();
