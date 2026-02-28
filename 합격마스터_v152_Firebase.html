@@ -4375,16 +4375,19 @@ function toggleShuffle() {
 
 function toggleAITutor() {
     const apiKey = localStorage.getItem('claudeApiKey');
-    if(!isAIMode && !apiKey) {
-        showToast('⚠️ API 키를 먼저 설정해주세요! 설정 → Claude AI 설정', 'warning');
-        openSettingsSheet();
-        return;
-    }
     isAIMode=!isAIMode;
     document.getElementById('btnAiTutor').classList.toggle('active', isAIMode);
     document.getElementById('aiStatusBadge').style.display=isAIMode?'inline-block':'none';
     updateUI();
-    showToast(isAIMode ? '🤖 AI 튜터 ON — 답 확인 시 실시간 해설!' : '🤖 AI 튜터 OFF');
+    if(isAIMode) {
+        if(apiKey) {
+            showToast('🤖 AI 튜터 ON — 답 확인 시 실시간 해설!');
+        } else {
+            showToast('🤖 AI 튜터 ON — JSON 해설 표시 (실시간 AI는 API 키 필요)');
+        }
+    } else {
+        showToast('🤖 AI 튜터 OFF');
+    }
 }
 
 // ====== Claude AI 기능 ======
@@ -4464,6 +4467,7 @@ ${isCorrect
 async function fetchAndDisplayAiExplanation(q) {
     if(!isAIMode) return;
     const apiKey = localStorage.getItem('claudeApiKey');
+    // API 키 없으면 실시간 호출 안 함 — JSON의 ai_tip이 그대로 표시됨
     if(!apiKey) return;
 
     const loadingEl = document.getElementById('aiLoadingIndicator');
