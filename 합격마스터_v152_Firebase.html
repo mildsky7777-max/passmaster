@@ -3633,9 +3633,19 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                     <button class="mock-cnt-btn" data-min="90">90분</button>
                 </div>
             </div>
-            <div style="margin-bottom:16px">
+            <div style="margin-bottom:12px">
                 <label style="display:flex;align-items:center;gap:8px;font-size:0.9em;font-weight:600;cursor:pointer">
                     <input type="checkbox" id="mockWrongOnly" style="width:16px;height:16px"> 오답/미풀이 문제만 출제
+                </label>
+            </div>
+            <div style="margin-bottom:12px">
+                <label style="display:flex;align-items:center;gap:8px;font-size:0.9em;font-weight:600;cursor:pointer">
+                    <input type="checkbox" id="mockBookmarkOnly" style="width:16px;height:16px"> ⭐ 북마크 문제만 출제
+                </label>
+            </div>
+            <div style="margin-bottom:16px">
+                <label style="display:flex;align-items:center;gap:8px;font-size:0.9em;font-weight:600;cursor:pointer">
+                    <input type="checkbox" id="mockWrongWeight" checked style="width:16px;height:16px"> 🎯 취약 문제 반복 가중치 (오답 3배 출제)
                 </label>
             </div>
             <div id="mockDedupInfo" style="font-size:0.82em;color:var(--text-muted);margin-bottom:8px;text-align:center;padding:6px 10px;background:var(--bg);border-radius:8px;border:1px dashed var(--border)">
@@ -3692,6 +3702,7 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
             <div id="mockResultList" style="text-align:left;margin-top:16px"></div>
             <div style="display:flex;gap:10px;margin-top:18px;justify-content:center;flex-wrap:wrap">
                 <button id="mockRetryWrongBtn" onclick="retryMockWrongQuestions()" style="display:none;padding:12px 20px;background:linear-gradient(135deg,#DC2626,#EF4444);color:#fff;border:none;border-radius:12px;font-size:0.9em;font-weight:700;cursor:pointer">🔄 틀린문제 다시풀기</button>
+                <button onclick="copyMockWrongReport()" style="padding:12px 20px;background:var(--bg);color:var(--text);border:1.5px solid var(--border);border-radius:12px;font-size:0.9em;font-weight:700;cursor:pointer">📋 오답 리포트</button>
                 <button onclick="switchMockTab('history');document.getElementById('mockExamResult').style.display='none';document.getElementById('mockExamSetup').style.display='block';" style="padding:12px 20px;background:var(--bg);color:var(--text);border:1.5px solid var(--border);border-radius:12px;font-size:0.9em;font-weight:700;cursor:pointer">📋 기록 보기</button>
                 <button onclick="closeMockExam()" style="padding:12px 20px;background:var(--primary);color:#fff;border:none;border-radius:12px;font-size:0.9em;font-weight:700;cursor:pointer">닫기</button>
             </div>
@@ -7122,6 +7133,8 @@ let mockQuestionTimerInterval=null; // 문제별 타이머 인터벌
 let mockSubjectRealtime={}; // 과목별 실시간 정답률 { subject: {correct:0, total:0} }
 let mockIsRetryMode=false; // 틀린문제 다시풀기 모드 여부
 let mockUsedQuestionKeys=new Set(); // 이미 출제된 문제 키 (중복 방지)
+let mockStreak=0; // 연속 정답 스트릭
+let mockMaxStreak=0; // 최대 연속 정답
 
 // ── 온라인 저장 헬퍼 ──
 async function onlineSave(key, value) {
@@ -7193,7 +7206,28 @@ function switchMockTab(tab) {
 function renderMockHistory() {
     const el = document.getElementById('mockHistoryList');
     if(!mockHistory.length) { el.innerHTML='<div style="text-align:center;color:var(--text-muted);padding:40px 0">아직 기록이 없어요</div>'; return; }
-    el.innerHTML = mockHistory.map((r,i)=>{
+    // ── 점수 추이 그래프 (최근 10회) ──
+    const chartData = mockHistory.slice(0,10).reverse();
+    const maxAcc = 100;
+    const chartHtml = chartData.length>=2 ? `
+    <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px">
+        <div style="font-weight:700;font-size:0.85em;margin-bottom:10px;color:var(--text)">📈 점수 추이 (최근 ${chartData.length}회)</div>
+        <div style="display:flex;align-items:flex-end;gap:6px;height:70px;margin-bottom:6px">
+            ${chartData.map((r,i)=>{
+                const h=Math.max(8,Math.round(r.acc/maxAcc*60));
+                const color=r.acc>=80?'var(--success)':r.acc>=60?'var(--warning)':'var(--danger)';
+                return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+                    <span style="font-size:0.6em;color:${color};font-weight:700">${r.acc}%</span>
+                    <div style="width:100%;height:${h}px;background:${color};border-radius:4px 4px 0 0;opacity:0.85"></div>
+                </div>`;
+            }).join('')}
+        </div>
+        <div style="display:flex;gap:6px">
+            ${chartData.map(r=>`<div style="flex:1;font-size:0.58em;color:var(--text-muted);text-align:center;overflow:hidden;white-space:nowrap">${r.date.slice(5,10)}</div>`).join('')}
+        </div>
+    </div>` : '';
+    el.innerHTML = chartHtml;
+    el.innerHTML += mockHistory.map((r,i)=>{
         const color = r.acc>=80?'var(--success)':r.acc>=60?'var(--warning)':'var(--danger)';
         const emoji = r.acc>=90?'🏆':r.acc>=80?'🎉':r.acc>=70?'😊':r.acc>=60?'🙂':'😓';
         return `<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px">
@@ -7381,7 +7415,11 @@ function applyMockTotalDistribute() {
 
 function startMockExam() {
     const wrongOnly=document.getElementById('mockWrongOnly').checked;
+    const bookmarkOnly=document.getElementById('mockBookmarkOnly')?.checked||false;
+    const useWeighting=document.getElementById('mockWrongWeight')?.checked!==false; // 기본 true
     const hasSubjectQuota = document.getElementById('mockSubjectQuotaWrap').style.display!=='none';
+    // 스트릭 초기화
+    mockStreak=0; mockMaxStreak=0;
 
     let pool=[];
     if(hasSubjectQuota && Object.values(mockSubjectQuota).some(v=>v>0)) {
@@ -7392,6 +7430,7 @@ function startMockExam() {
                 if(mockSelectedField!=='all'){ const f=fieldMap[q.tag||'기타']||getAutoField(q.tag||'기타'); if(f!==mockSelectedField) return false; }
                 if((q.subject||'미분류')!==subject) return false;
                 if(wrongOnly && q.my_status!=='wrong' && q.my_status) return false;
+                if(bookmarkOnly && !q.bookmark) return false;
                 return true;
             });
             // 셔플 후 count개 추출
@@ -7411,6 +7450,21 @@ function startMockExam() {
     }
 
     if(pool.length===0){ showToast('출제할 문제가 없습니다. 조건을 변경해주세요.','warning'); return; }
+
+    // ── 취약 문제 가중치: 틀린 문제를 2~3배 더 자주 출제 ──
+    if(useWeighting) {
+        const weighted=[];
+        pool.forEach(q=>{
+            weighted.push(q);
+            if(q.my_status==='wrong') { weighted.push(q); weighted.push(q); } // 3배
+            else if(q.my_status==='retry') { weighted.push(q); } // 2배
+        });
+        // 중복 제거 후 랜덤 셔플 (가중치 반영)
+        for(let i=weighted.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[weighted[i],weighted[j]]=[weighted[j],weighted[i]];}
+        // 중복 제거 (순서 유지)
+        const seen=new Set();
+        pool=weighted.filter(q=>{ const k=(q.tag||'')+(q.question||'').slice(0,40); if(seen.has(k)) return false; seen.add(k); return true; });
+    }
 
     // ── 중복 출제 방지: 이전에 출제된 문제 제외 ──
     const makeKey = q => (q.tag||'기타')+'||'+q.question.trim().slice(0,80);
@@ -7522,10 +7576,13 @@ function submitMockAnswer(){
     if(isCorrect){ 
         mockCorrect++; sel.classList.add('correct'); q._mockResult='correct'; q._mockMyAns=myVal;
         if(mockSubjectRealtime[sub]) mockSubjectRealtime[sub].correct++;
+        mockStreak++; if(mockStreak>mockMaxStreak) mockMaxStreak=mockStreak;
+        if(mockStreak>=3){ showToast(`🔥 ${mockStreak}연속 정답!`,'success'); }
     } else {
         mockWrong++;
         sel.classList.add('wrong'); q._mockResult='wrong'; q._mockMyAns=myVal;
         if(mockSubjectRealtime[sub]) mockSubjectRealtime[sub].wrong++;
+        mockStreak=0;
         const correctOptIdx=q.options.findIndex(o=>compareAnswers(o.split(' ')[0],q.answer));
         if(correctOptIdx>=0){ const cel=document.getElementById('mopt'+correctOptIdx); if(cel) cel.classList.add('correct'); }
     }
@@ -7705,8 +7762,8 @@ function analyzeMockQuestionTimes() {
     const wrongAvg = wrongTimes.length > 0 ? Math.round(wrongTimes.reduce((a,b)=>a+b,0) / wrongTimes.length) : 0;
     const correctAvg = correctTimes.length > 0 ? Math.round(correctTimes.reduce((a,b)=>a+b,0) / correctTimes.length) : 0;
     
-    // 가장 오래 걸린 문제 찾기
-    const slowest = mockQuestions.filter(q => q._mockTimeSpent).sort((a,b) => b._mockTimeSpent - a._mockTimeSpent)[0];
+    // 가장 오래 걸린 문제 Top3
+    const slowestTop3 = mockQuestions.filter(q => q._mockTimeSpent).sort((a,b) => b._mockTimeSpent - a._mockTimeSpent).slice(0,3);
     
     let insight = '';
     if(wrongAvg > correctAvg + 10) {
@@ -7726,6 +7783,7 @@ function analyzeMockQuestionTimes() {
                 <div><span style="color:var(--text-muted)">총 소요:</span> <b>${Math.floor(totalTime/60)}분 ${totalTime%60}초</b></div>
                 <div><span style="color:var(--text-muted)">평균:</span> <b>${avgTime}초</b>/문제</div>
                 <div><span style="color:var(--text-muted)">최장:</span> <b>${maxTime}초</b></div>
+                ${mockMaxStreak>=3?`<div><span style="color:#F59E0B">🔥 최대 스트릭:</span> <b>${mockMaxStreak}연속</b></div>`:''}
             </div>
             ${wrongAvg > 0 || correctAvg > 0 ? `
             <div style="display:flex;gap:16px;font-size:0.82em;margin-bottom:8px">
@@ -7733,9 +7791,37 @@ function analyzeMockQuestionTimes() {
                 ${wrongAvg > 0 ? `<div><span style="color:var(--danger)">❌ 오답 평균:</span> <b>${wrongAvg}초</b></div>` : ''}
             </div>` : ''}
             ${insight ? `<div style="font-size:0.8em;color:var(--primary);font-weight:600;margin-top:4px">${insight}</div>` : ''}
+            ${slowestTop3.length>0?`
+            <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
+                <div style="font-weight:700;font-size:0.82em;color:var(--danger);margin-bottom:6px">🐢 가장 오래 걸린 문제 Top${slowestTop3.length}</div>
+                ${slowestTop3.map((q,i)=>`<div style="font-size:0.78em;color:var(--text-sub);margin-bottom:4px;display:flex;gap:6px;align-items:flex-start">
+                    <span style="font-weight:800;color:${i===0?'var(--danger)':i===1?'var(--warning)':'var(--text-muted)'};flex-shrink:0">${i+1}위 ${q._mockTimeSpent}초</span>
+                    <span style="color:${q._mockResult==='wrong'?'var(--danger)':'var(--text-sub)'}">${q.question.slice(0,45)}${q.question.length>45?'…':''}</span>
+                </div>`).join('')}
+            </div>`:``}
         </div>`;
     
     return { html, avgTime, totalTime };
+}
+
+// 오답 리포트 클립보드 복사
+function copyMockWrongReport() {
+    const wrong = mockQuestions.filter(q=>q._mockResult==='wrong');
+    if(!wrong.length){ showToast('오답이 없습니다! 🎉','success'); return; }
+    const now=new Date();
+    const dateStr=`${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+    const total=mockCorrect+mockWrong;
+    const acc=total>0?Math.round(mockCorrect/total*100):0;
+    let text=`📝 모의고사 오답 리포트 (${dateStr})\n`;
+    text+=`정답률: ${acc}% (${mockCorrect}/${total})\n`;
+    if(mockMaxStreak>=3) text+=`🔥 최대 연속 정답: ${mockMaxStreak}회\n`;
+    text+=`\n❌ 틀린 문제 ${wrong.length}개\n${'─'.repeat(30)}\n`;
+    wrong.forEach((q,i)=>{
+        text+=`\n${i+1}. [${q.subject||q.tag||''}] ${q.question}\n`;
+        text+=`   정답: ${q.answer}\n`;
+        if(q.original_explanation) text+=`   해설: ${q.original_explanation.slice(0,80)}${q.original_explanation.length>80?'…':''}\n`;
+    });
+    navigator.clipboard.writeText(text).then(()=>showToast('📋 오답 리포트가 클립보드에 복사되었습니다!','success')).catch(()=>showToast('복사 실패: 브라우저가 지원하지 않습니다','warning'));
 }
 
 // 틀린문제 다시풀기
