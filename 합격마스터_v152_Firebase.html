@@ -3904,7 +3904,15 @@ window.onload = function() {
     initActiveTagsAndSubjects();
     applyFilter(); updateUI(); updateStatsUI(); updateGoalUI(); updateBadges();
     initConfetti(); initSwipe();
-    switchTab('quiz');
+    // 마지막 탭 복원
+    const _lastTab = localStorage.getItem('lastTab_v156') || 'quiz';
+    switchTab(_lastTab);
+    // 마지막 문제 인덱스 복원
+    const _lastIdx = parseInt(localStorage.getItem('lastIndex_v156') || '0');
+    if(_lastIdx > 0 && _lastIdx < filteredIndices.length) {
+        currentIndex = _lastIdx;
+        updateUI();
+    }
     document.addEventListener('keydown', handleGlobalKeydown);
 
     // VER.89 init
@@ -4087,7 +4095,8 @@ function applyFilter() {
    UPDATE UI
 ============================================================ */
 function updateUI() {
-    // Mode badge
+    // 현재 문제 인덱스 저장 (앱 재시작 시 복원용)
+    localStorage.setItem('lastIndex_v156', String(currentIndex));
     const modeBadge = document.getElementById('modeStatusBadge');
     if(currentFilter==='wrong'){ modeBadge.innerText='오답노트'; modeBadge.style.cssText='display:inline-block;background:var(--danger-light);color:var(--danger);padding:3px 7px;border-radius:7px;font-size:0.72em;font-weight:700'; }
     else if(currentFilter==='retry'){ modeBadge.innerText='🔄 재도전'; modeBadge.style.cssText='display:inline-block;background:linear-gradient(135deg,#EF4444,#F97316);color:white;padding:3px 7px;border-radius:7px;font-size:0.72em;font-weight:700'; }
@@ -4335,6 +4344,7 @@ function switchTab(t) {
         ltmBlockQuizEntry();
         return;
     }
+    localStorage.setItem('lastTab_v156', t);
     document.getElementById('tab-quiz').classList.toggle('active', t==='quiz');
     document.getElementById('tab-card').classList.toggle('active', t==='card');
     // Sync main mode tabs
