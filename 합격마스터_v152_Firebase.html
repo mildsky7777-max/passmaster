@@ -2940,6 +2940,16 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
 
             <hr class="section-divider">
 
+            <!-- 모의고사 (위로 분리) -->
+            <div style="margin-bottom:12px">
+                <button class="s-btn" onclick="openMockExam()" style="width:100%;height:56px;background:linear-gradient(135deg,#7C3AED,#4F46E5);color:white;font-size:0.95em;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:14px;border:none;cursor:pointer;box-shadow:0 4px 12px rgba(124,58,237,0.3)">
+                    <span style="font-size:1.3em">📝</span>
+                    <span>모의고사 시작</span>
+                </button>
+            </div>
+
+            <hr class="section-divider">
+
             <!-- ⑦ 더보기 (접기/펼치기) — 가끔 쓰는 것들 -->
             <div id="morePanel">
                 <button onclick="toggleMorePanel()" id="morePanelBtn" style="width:100%;padding:10px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;font-size:0.85em;font-weight:700;color:var(--text-sub);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:0">
@@ -2964,15 +2974,12 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                     <!-- 분석 -->
                     <div style="margin-bottom:12px">
                         <div class="section-label">분석</div>
-                        <div class="btn-grid-3 no-select">
+                        <div class="btn-grid-2 no-select">
                             <button class="s-btn s-btn-ai" onclick="openDashboard()">
                                 <span class="s-btn-icon">📊</span>학습 분석
                             </button>
                             <button class="s-btn" onclick="openOMRModal()">
                                 <span class="s-btn-icon">📋</span>OMR 답안지
-                            </button>
-                            <button class="s-btn" onclick="openMockExam()">
-                                <span class="s-btn-icon">📝</span>모의고사
                             </button>
                         </div>
                     </div>
@@ -3645,6 +3652,7 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;max-width:var(--app-max);margin-left:auto;margin-right:auto">
                     <span id="mockExamTitle" style="font-weight:800;font-size:1em">모의고사</span>
                     <div style="display:flex;align-items:center;gap:12px">
+                        <span id="mockQuestionTimer" style="font-size:0.85em;color:var(--text-muted);font-weight:600;font-variant-numeric:tabular-nums">⏱ 0:00</span>
                         <span id="mockTimerDisp" style="font-size:0.9em;color:var(--danger);font-weight:800"></span>
                         <button onclick="confirmExitMockExam()" style="padding:6px 12px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;font-size:0.85em;font-weight:600;cursor:pointer">나가기</button>
                     </div>
@@ -3657,6 +3665,8 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                     <div style="height:6px;border-radius:4px;background:var(--border);overflow:hidden">
                         <div id="mockProgressFill" style="height:100%;background:linear-gradient(90deg,var(--primary),#7C3AED);border-radius:4px;transition:width 0.3s;width:0%"></div>
                     </div>
+                    <!-- 과목별 실시간 정답률 -->
+                    <div id="mockSubjectStats" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:0.78em"></div>
                 </div>
             </div>
             <div id="mockQuizBody" style="-webkit-overflow-scrolling:touch;overflow-y:auto;flex:1;min-height:0;padding:20px 16px;max-width:var(--app-max);margin:0 auto;width:100%;box-sizing:border-box"></div>
@@ -3673,8 +3683,11 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
             <div style="font-size:2em;margin-bottom:8px">🎉</div>
             <h3 id="mockResultTitle" style="margin:0 0 8px"></h3>
             <div id="mockResultStats" style="margin:16px 0"></div>
+            <!-- 소요시간 분석 -->
+            <div id="mockTimeAnalysis" style="margin:16px 0;text-align:left"></div>
             <div id="mockResultList" style="text-align:left;margin-top:16px"></div>
-            <div style="display:flex;gap:10px;margin-top:18px;justify-content:center">
+            <div style="display:flex;gap:10px;margin-top:18px;justify-content:center;flex-wrap:wrap">
+                <button id="mockRetryWrongBtn" onclick="retryMockWrongQuestions()" style="display:none;padding:12px 20px;background:linear-gradient(135deg,#DC2626,#EF4444);color:#fff;border:none;border-radius:12px;font-size:0.9em;font-weight:700;cursor:pointer">🔄 틀린문제 다시풀기</button>
                 <button onclick="switchMockTab('history');document.getElementById('mockExamResult').style.display='none';document.getElementById('mockExamSetup').style.display='block';" style="padding:12px 20px;background:var(--bg);color:var(--text);border:1.5px solid var(--border);border-radius:12px;font-size:0.9em;font-weight:700;cursor:pointer">📋 기록 보기</button>
                 <button onclick="closeMockExam()" style="padding:12px 20px;background:var(--primary);color:#fff;border:none;border-radius:12px;font-size:0.9em;font-weight:700;cursor:pointer">닫기</button>
             </div>
@@ -7100,6 +7113,10 @@ let mockTimerLimit=0,mockTimerLeft=0,mockTimerInterval=null;
 let mockSelectedField='all';
 let mockSubjectQuota={}; // { '조경사': 10, '조경계획': 10, ... }
 let mockHistory=[]; // 시험 기록 저장
+let mockQuestionStartTime=0; // 문제별 시작 시간
+let mockQuestionTimerInterval=null; // 문제별 타이머 인터벌
+let mockSubjectRealtime={}; // 과목별 실시간 정답률 { subject: {correct:0, total:0} }
+let mockIsRetryMode=false; // 틀린문제 다시풀기 모드 여부
 
 function loadMockHistory() {
     try { mockHistory=JSON.parse(localStorage.getItem('mockHistory_v110')||'[]'); } catch(e){ mockHistory=[]; }
@@ -7344,13 +7361,22 @@ function startMockExam() {
     if(pool.length===0){ showToast('출제할 문제가 없습니다. 조건을 변경해주세요.','warning'); return; }
     mockQuestions=pool;
     mockIdx=0; mockCorrect=0; mockWrong=0; mockAnswered=false;
+    mockIsRetryMode=false;
+    
+    // 과목별 실시간 통계 초기화
+    mockSubjectRealtime={};
+    mockQuestions.forEach(q => {
+        const sub = q.subject || '미분류';
+        if(!mockSubjectRealtime[sub]) mockSubjectRealtime[sub] = {correct:0, wrong:0, total:0};
+        mockSubjectRealtime[sub].total++;
+    });
 
     document.getElementById('mockExamSetup').style.display='none';
     document.getElementById('mockExamHistory').style.display='none';
     document.getElementById('mockExamPlay').style.display='flex';
     document.getElementById('mockExamResult').style.display='none';
 
-    // 타이머
+    // 전체 타이머
     if(mockTimerLimit>0){
         mockTimerLeft=mockTimerLimit*60;
         mockTimerInterval=setInterval(()=>{
@@ -7364,7 +7390,8 @@ function startMockExam() {
     } else { document.getElementById('mockTimerDisp').innerText=''; }
 
     const label=mockSelectedField==='all'?'전체':mockSelectedField;
-    document.getElementById('mockExamTitle').innerText=`📝 ${label} 모의고사`;
+    document.getElementById('mockExamTitle').innerText = mockIsRetryMode ? `🔄 오답 다시풀기` : `📝 ${label} 모의고사`;
+    updateMockSubjectStats();
     renderMockQuestion();
 }
 
@@ -7378,6 +7405,20 @@ function renderMockQuestion() {
     document.getElementById('mockProgressFill').style.width=((mockIdx)/total*100)+'%';
     document.getElementById('mockSubmitBtn').style.display='block';
     document.getElementById('mockNextBtn').style.display='none';
+
+    // 문제별 타이머 시작
+    mockQuestionStartTime = Date.now();
+    if(mockQuestionTimerInterval) clearInterval(mockQuestionTimerInterval);
+    mockQuestionTimerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - mockQuestionStartTime) / 1000);
+        const m = Math.floor(elapsed / 60), s = elapsed % 60;
+        const el = document.getElementById('mockQuestionTimer');
+        if(el) el.innerText = `⏱ ${m}:${s.toString().padStart(2,'0')}`;
+        // 30초 이상이면 색상 변경
+        if(el) el.style.color = elapsed >= 30 ? 'var(--warning)' : 'var(--text-muted)';
+    }, 1000);
+    document.getElementById('mockQuestionTimer').innerText = '⏱ 0:00';
+    document.getElementById('mockQuestionTimer').style.color = 'var(--text-muted)';
 
     let html=`<div style="font-size:1.1em;font-weight:600;line-height:1.7;margin-bottom:18px;white-space:pre-wrap;color:var(--text)">${escapeHtml(q.question)}</div>`;
     if(q.options&&q.options.length>0){
@@ -7402,16 +7443,31 @@ function submitMockAnswer(){
     const sel=document.querySelector('.mock-opt.selected');
     if(!sel){ showToast('답을 선택해주세요!'); return; }
     mockAnswered=true;
+    
+    // 문제별 소요시간 저장
+    const timeSpent = Math.floor((Date.now() - mockQuestionStartTime) / 1000);
+    q._mockTimeSpent = timeSpent;
+    if(mockQuestionTimerInterval) { clearInterval(mockQuestionTimerInterval); mockQuestionTimerInterval = null; }
+    
     const selIdx=[...document.querySelectorAll('.mock-opt')].indexOf(sel);
     const myVal=q.options[selIdx].split(' ')[0];
     const isCorrect=compareAnswers(myVal,q.answer);
-    if(isCorrect){ mockCorrect++; sel.classList.add('correct'); q._mockResult='correct'; q._mockMyAns=myVal; }
-    else {
+    const sub = q.subject || '미분류';
+    
+    if(isCorrect){ 
+        mockCorrect++; sel.classList.add('correct'); q._mockResult='correct'; q._mockMyAns=myVal;
+        if(mockSubjectRealtime[sub]) mockSubjectRealtime[sub].correct++;
+    } else {
         mockWrong++;
         sel.classList.add('wrong'); q._mockResult='wrong'; q._mockMyAns=myVal;
+        if(mockSubjectRealtime[sub]) mockSubjectRealtime[sub].wrong++;
         const correctOptIdx=q.options.findIndex(o=>compareAnswers(o.split(' ')[0],q.answer));
         if(correctOptIdx>=0){ const cel=document.getElementById('mopt'+correctOptIdx); if(cel) cel.classList.add('correct'); }
     }
+    
+    // 과목별 실시간 통계 업데이트
+    updateMockSubjectStats();
+    
     if(q.original_explanation){
         const explEl=document.createElement('div');
         explEl.style.cssText='margin-top:16px;font-size:0.95em;color:var(--text-sub);background:var(--surface);border-radius:14px;padding:16px;line-height:1.7;border:1.5px solid var(--border)';
@@ -7424,6 +7480,22 @@ function submitMockAnswer(){
     document.getElementById('mockScore').innerHTML=`✅${mockCorrect} ❌${mockWrong}`;
 }
 
+// 과목별 실시간 통계 업데이트
+function updateMockSubjectStats() {
+    const container = document.getElementById('mockSubjectStats');
+    if(!container) return;
+    
+    const html = Object.entries(mockSubjectRealtime).map(([sub, stats]) => {
+        const answered = stats.correct + stats.wrong;
+        const acc = answered > 0 ? Math.round(stats.correct / answered * 100) : null;
+        const color = acc === null ? 'var(--text-muted)' : acc >= 80 ? 'var(--success)' : acc >= 60 ? 'var(--warning)' : 'var(--danger)';
+        const accText = acc !== null ? `${acc}%` : '-';
+        return `<span style="background:${acc===null?'var(--bg)':color+'20'};color:${color};padding:3px 8px;border-radius:6px;font-weight:600;white-space:nowrap">${sub} ${accText}</span>`;
+    }).join('');
+    
+    container.innerHTML = html;
+}
+
 function nextMockQuestion(){
     mockIdx++;
     if(mockIdx>=mockQuestions.length){ showMockResult(); return; }
@@ -7432,6 +7504,7 @@ function nextMockQuestion(){
 
 function showMockResult(){
     if(mockTimerInterval){ clearInterval(mockTimerInterval); mockTimerInterval=null; }
+    if(mockQuestionTimerInterval){ clearInterval(mockQuestionTimerInterval); mockQuestionTimerInterval=null; }
     const total=mockCorrect+mockWrong;
     const acc=total>0?Math.round(mockCorrect/total*100):0;
 
@@ -7443,10 +7516,13 @@ function showMockResult(){
     });
     saveArchive();
 
+    // ── 시간 분석 ──
+    const timeAnalysis = analyzeMockQuestionTimes();
+
     // ── 시험 기록 저장 ──
     const now=new Date();
     const dateStr=`${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-    const label=mockSelectedField==='all'?'전체 모의고사':mockSelectedField+' 모의고사';
+    const label=mockIsRetryMode ? '오답 다시풀기' : (mockSelectedField==='all'?'전체 모의고사':mockSelectedField+' 모의고사');
     // 과목별 성적 요약
     const subjectStats={};
     mockQuestions.forEach(q=>{
@@ -7457,14 +7533,14 @@ function showMockResult(){
     });
     const subjectSummary=Object.entries(subjectStats).map(([s,v])=>`${s} ${Math.round(v.correct/v.total*100)}%`).join(' · ');
     const elapsed=mockTimerLimit>0?`${mockTimerLimit}분 제한`:null;
-    mockHistory.unshift({ date:dateStr, label, acc, correct:mockCorrect, wrong:mockWrong, total:mockQuestions.length, time:elapsed, subjects:subjectSummary });
+    mockHistory.unshift({ date:dateStr, label, acc, correct:mockCorrect, wrong:mockWrong, total:mockQuestions.length, time:elapsed, subjects:subjectSummary, avgTime: timeAnalysis.avgTime });
     saveMockHistory();
 
     // ── 결과 화면 ──
     document.getElementById('mockExamPlay').style.display='none';
     document.getElementById('mockExamResult').style.display='block';
     const emoji=acc>=90?'🏆':acc>=80?'🎉':acc>=70?'😊':acc>=60?'🙂':'😓';
-    document.getElementById('mockResultTitle').innerText=`${emoji} 모의고사 완료!`;
+    document.getElementById('mockResultTitle').innerText = mockIsRetryMode ? `${emoji} 오답 다시풀기 완료!` : `${emoji} 모의고사 완료!`;
     const color=acc>=80?'var(--success)':acc>=60?'var(--warning)':'var(--danger)';
     document.getElementById('mockResultStats').innerHTML=`
         <div style="display:flex;justify-content:center;gap:20px;margin:12px 0">
@@ -7476,12 +7552,23 @@ function showMockResult(){
         ${subjectSummary?`<div style="font-size:0.8em;color:var(--text-sub);background:var(--bg);border-radius:10px;padding:8px 12px">${subjectSummary}</div>`:''}
         ${mockWrong>0?`<div style="margin-top:8px;font-size:0.82em;color:var(--warning);font-weight:600">⚠️ 틀린 문제 ${mockWrong}개가 오답 아카이브에 자동 저장되었습니다.</div>`:''}`;
 
+    // 시간 분석 표시
+    document.getElementById('mockTimeAnalysis').innerHTML = timeAnalysis.html;
+    
+    // 틀린문제 다시풀기 버튼 표시
+    const retryBtn = document.getElementById('mockRetryWrongBtn');
+    if(retryBtn) retryBtn.style.display = mockWrong > 0 ? 'inline-block' : 'none';
+
     if(mockWrong>0){
         let wrongHtml='<h4 style="margin:0 0 10px;font-size:0.9em;color:var(--danger)">❌ 틀린 문제 ('+mockWrong+'개)</h4>';
         mockQuestions.forEach((q,i)=>{
             if(!q._mockResult || q._mockResult!=='wrong') return;
+            const timeStr = q._mockTimeSpent ? `⏱${q._mockTimeSpent}초` : '';
             wrongHtml+=`<div style="background:var(--danger-light);border-radius:10px;padding:10px;margin-bottom:8px;font-size:0.82em">
-                <div style="font-weight:600;color:var(--text);margin-bottom:4px">${i+1}. ${escapeHtml(q.question.slice(0,80))}${q.question.length>80?'…':''}</div>
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+                    <span style="font-weight:600;color:var(--text)">${i+1}. ${escapeHtml(q.question.slice(0,80))}${q.question.length>80?'…':''}</span>
+                    ${timeStr?`<span style="font-size:0.85em;color:var(--text-muted);flex-shrink:0;margin-left:8px">${timeStr}</span>`:''}
+                </div>
                 <div style="color:var(--success);font-weight:700">✅ 정답: ${escapeHtml(q.answer)}</div>
                 ${q.original_explanation?`<div style="color:var(--text-sub);margin-top:4px">${escapeHtml(q.original_explanation.slice(0,100))}${q.original_explanation.length>100?'…':''}</div>`:''}
             </div>`;
@@ -7490,6 +7577,100 @@ function showMockResult(){
     } else {
         document.getElementById('mockResultList').innerHTML='<div style="text-align:center;color:var(--success);font-size:1.1em;font-weight:700">🎉 모두 정답!</div>';
     }
+}
+
+// 문제별 소요시간 분석
+function analyzeMockQuestionTimes() {
+    const times = mockQuestions.filter(q => q._mockTimeSpent).map(q => q._mockTimeSpent);
+    if(times.length === 0) return { html: '', avgTime: 0 };
+    
+    const totalTime = times.reduce((a,b) => a+b, 0);
+    const avgTime = Math.round(totalTime / times.length);
+    const maxTime = Math.max(...times);
+    const minTime = Math.min(...times);
+    
+    // 오답 문제들의 평균 시간
+    const wrongTimes = mockQuestions.filter(q => q._mockResult === 'wrong' && q._mockTimeSpent).map(q => q._mockTimeSpent);
+    const correctTimes = mockQuestions.filter(q => q._mockResult === 'correct' && q._mockTimeSpent).map(q => q._mockTimeSpent);
+    const wrongAvg = wrongTimes.length > 0 ? Math.round(wrongTimes.reduce((a,b)=>a+b,0) / wrongTimes.length) : 0;
+    const correctAvg = correctTimes.length > 0 ? Math.round(correctTimes.reduce((a,b)=>a+b,0) / correctTimes.length) : 0;
+    
+    // 가장 오래 걸린 문제 찾기
+    const slowest = mockQuestions.filter(q => q._mockTimeSpent).sort((a,b) => b._mockTimeSpent - a._mockTimeSpent)[0];
+    
+    let insight = '';
+    if(wrongAvg > correctAvg + 10) {
+        insight = '💡 틀린 문제에 더 오래 고민했어요. 확실히 아는 문제는 빠르게 넘기세요!';
+    } else if(wrongAvg < correctAvg - 5) {
+        insight = '💡 틀린 문제를 너무 빨리 풀었어요. 조금 더 신중하게 접근해보세요!';
+    } else if(avgTime < 20) {
+        insight = '💡 전체적으로 빠르게 풀었어요. 좋은 페이스입니다!';
+    } else if(avgTime > 60) {
+        insight = '💡 문제당 시간이 길어요. 시간 관리 연습이 필요할 수 있어요.';
+    }
+    
+    const html = `
+        <div style="background:var(--bg);border-radius:12px;padding:12px;text-align:left">
+            <div style="font-weight:700;font-size:0.85em;margin-bottom:8px;color:var(--text)">⏱ 시간 분석</div>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:0.82em;margin-bottom:8px">
+                <div><span style="color:var(--text-muted)">총 소요:</span> <b>${Math.floor(totalTime/60)}분 ${totalTime%60}초</b></div>
+                <div><span style="color:var(--text-muted)">평균:</span> <b>${avgTime}초</b>/문제</div>
+                <div><span style="color:var(--text-muted)">최장:</span> <b>${maxTime}초</b></div>
+            </div>
+            ${wrongAvg > 0 || correctAvg > 0 ? `
+            <div style="display:flex;gap:16px;font-size:0.82em;margin-bottom:8px">
+                ${correctAvg > 0 ? `<div><span style="color:var(--success)">✅ 정답 평균:</span> <b>${correctAvg}초</b></div>` : ''}
+                ${wrongAvg > 0 ? `<div><span style="color:var(--danger)">❌ 오답 평균:</span> <b>${wrongAvg}초</b></div>` : ''}
+            </div>` : ''}
+            ${insight ? `<div style="font-size:0.8em;color:var(--primary);font-weight:600;margin-top:4px">${insight}</div>` : ''}
+        </div>`;
+    
+    return { html, avgTime, totalTime };
+}
+
+// 틀린문제 다시풀기
+function retryMockWrongQuestions() {
+    const wrongQuestions = mockQuestions.filter(q => q._mockResult === 'wrong');
+    if(wrongQuestions.length === 0) {
+        showToast('틀린 문제가 없습니다!', 'success');
+        return;
+    }
+    
+    // 초기화
+    wrongQuestions.forEach(q => {
+        delete q._mockResult;
+        delete q._mockMyAns;
+        delete q._mockTimeSpent;
+    });
+    
+    // 셔플
+    for(let i = wrongQuestions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [wrongQuestions[i], wrongQuestions[j]] = [wrongQuestions[j], wrongQuestions[i]];
+    }
+    
+    mockQuestions = wrongQuestions;
+    mockIdx = 0;
+    mockCorrect = 0;
+    mockWrong = 0;
+    mockAnswered = false;
+    mockIsRetryMode = true;
+    
+    // 과목별 통계 재초기화
+    mockSubjectRealtime = {};
+    mockQuestions.forEach(q => {
+        const sub = q.subject || '미분류';
+        if(!mockSubjectRealtime[sub]) mockSubjectRealtime[sub] = {correct:0, wrong:0, total:0};
+        mockSubjectRealtime[sub].total++;
+    });
+    
+    document.getElementById('mockExamResult').style.display = 'none';
+    document.getElementById('mockExamPlay').style.display = 'flex';
+    document.getElementById('mockExamTitle').innerText = '🔄 오답 다시풀기';
+    
+    updateMockSubjectStats();
+    renderMockQuestion();
+    showToast(`🔄 틀린 ${wrongQuestions.length}문제 다시 시작!`, 'success');
 }
 
 function confirmExitMockExam() {
