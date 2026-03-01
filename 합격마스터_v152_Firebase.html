@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-title" content="합격마스터">
     <meta name="format-detection" content="telephone=no">
     <meta name="theme-color" content="#4F46E5">
-    <title>합격마스터 (Ver.152 실시간동기화)</title>
+    <title>합격마스터 (Ver.154)</title>
 
 <!-- Firebase SDK: body 끝에서 로드 -->
 <style>
@@ -5513,13 +5513,95 @@ function applySubjectSelection() {
 }
 function openWorkbookModal() {
     const list=document.getElementById('workbookList'); list.innerHTML='';
-    [...new Set(bank.map(q=>q.tag||'기타'))].sort().forEach(t=>{
-        const div=document.createElement('div'); div.className='workbook-item';
-        div.innerHTML=`<div style="display:flex;align-items:center;flex:1"><input type="checkbox" value="${t}" ${activeTags.has(t)?'checked':''}><span style="margin-left:8px">${t}</span></div><button class="btn-delete-tag" onclick="deleteWorkbook('${t}')">🗑 삭제</button>`;
-        div.firstElementChild.onclick=e=>{ if(e.target.tagName!=='INPUT') div.querySelector('input').click(); };
-        list.appendChild(div);
+    const allTags = [...new Set(bank.map(q=>q.tag||'기타'))].sort();
+    
+    // 대분류(시험유형)별로 그룹핑
+    const grouped = { '산안기': [], '전기': [], '조경': [], '기타': [] };
+    allTags.forEach(t => {
+        const field = fieldMap[t] || getAutoField(t) || '기타';
+        if(grouped[field]) grouped[field].push(t);
+        else grouped['기타'].push(t);
     });
+    
+    // 대분류별 색상
+    const fieldColors = { '산안기': '#EF4444', '전기': '#F59E0B', '조경': '#10B981', '기타': '#94A3B8' };
+    const fieldEmojis = { '산안기': '🦺', '전기': '⚡', '조경': '🌳', '기타': '📁' };
+    
+    // 각 대분류별로 렌더링
+    Object.entries(grouped).forEach(([field, tags]) => {
+        if(tags.length === 0) return;
+        
+        const totalCount = tags.reduce((sum, t) => sum + bank.filter(q => (q.tag||'기타') === t).length, 0);
+        const checkedCount = tags.filter(t => activeTags.has(t)).length;
+        
+        // 대분류 헤더
+        const header = document.createElement('div');
+        header.className = 'workbook-category-header';
+        header.style.cssText = `
+            display:flex;align-items:center;justify-content:space-between;
+            padding:10px 12px;margin:8px 0 4px 0;
+            background:linear-gradient(135deg, ${fieldColors[field]}15, ${fieldColors[field]}08);
+            border-left:3px solid ${fieldColors[field]};
+            border-radius:8px;cursor:pointer;
+        `;
+        header.innerHTML = `
+            <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:1.1em">${fieldEmojis[field]}</span>
+                <span style="font-weight:700;color:${fieldColors[field]}">${field}</span>
+                <span style="font-size:0.8em;color:var(--text-muted)">(${tags.length}개 문제집 · ${totalCount}문제)</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+                <button class="wb-cat-toggle" data-field="${field}" onclick="event.stopPropagation();toggleWorkbookCategory('${field}',true)" style="font-size:0.72em;padding:3px 8px;border:1px solid var(--border);background:var(--surface);border-radius:6px;cursor:pointer">전체선택</button>
+                <button class="wb-cat-toggle" data-field="${field}" onclick="event.stopPropagation();toggleWorkbookCategory('${field}',false)" style="font-size:0.72em;padding:3px 8px;border:1px solid var(--border);background:var(--surface);border-radius:6px;cursor:pointer">해제</button>
+                <span class="wb-cat-arrow" data-field="${field}" style="font-size:0.9em;transition:transform 0.2s">▼</span>
+            </div>
+        `;
+        header.onclick = (e) => {
+            if(e.target.tagName === 'BUTTON') return;
+            toggleWorkbookCategoryCollapse(field);
+        };
+        list.appendChild(header);
+        
+        // 문제집 목록 컨테이너
+        const container = document.createElement('div');
+        container.className = 'workbook-category-items';
+        container.dataset.field = field;
+        container.style.cssText = 'padding-left:8px;';
+        
+        tags.forEach(t => {
+            const count = bank.filter(q => (q.tag||'기타') === t).length;
+            const div = document.createElement('div'); 
+            div.className = 'workbook-item';
+            div.innerHTML = `
+                <div style="display:flex;align-items:center;flex:1">
+                    <input type="checkbox" value="${t}" data-field="${field}" ${activeTags.has(t)?'checked':''}>
+                    <span style="margin-left:8px">${t}</span>
+                    <span style="margin-left:auto;font-size:0.78em;color:var(--text-muted);background:var(--bg);padding:2px 6px;border-radius:6px">${count}</span>
+                </div>
+                <button class="btn-delete-tag" onclick="deleteWorkbook('${t}')">🗑</button>
+            `;
+            div.firstElementChild.onclick = e => { if(e.target.tagName!=='INPUT') div.querySelector('input').click(); };
+            container.appendChild(div);
+        });
+        
+        list.appendChild(container);
+    });
+    
     document.getElementById('workbookModal').style.display='flex';
+}
+
+function toggleWorkbookCategory(field, check) {
+    document.querySelectorAll(`#workbookList input[data-field="${field}"]`).forEach(cb => cb.checked = check);
+}
+
+function toggleWorkbookCategoryCollapse(field) {
+    const container = document.querySelector(`.workbook-category-items[data-field="${field}"]`);
+    const arrow = document.querySelector(`.wb-cat-arrow[data-field="${field}"]`);
+    if(!container) return;
+    
+    const isHidden = container.style.display === 'none';
+    container.style.display = isHidden ? 'block' : 'none';
+    if(arrow) arrow.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(-90deg)';
 }
 function deleteWorkbook(tagToRemove) {
     showConfirm('🗑 문제집 삭제\n"'+tagToRemove+'" 문제집을 삭제합니다.\n계속하시겠습니까?',()=>{
@@ -7096,7 +7178,7 @@ function renderMockSubjectQuota() {
         return f===mockSelectedField;
     }).map(q=>q.subject||'미분류'))].filter(Boolean).sort();
 
-    if(subjects.length<=1){ document.getElementById('mockSubjectQuotaWrap').style.display='none'; return; }
+    if(subjects.length<=1){ document.getElementById('mockSubjectQuotaWrap').style.display='none'; mockSubjectQuota={}; return; }
     document.getElementById('mockSubjectQuotaWrap').style.display='block';
 
     // 각 과목의 전체 문제 수
@@ -7108,8 +7190,9 @@ function renderMockSubjectQuota() {
         }).length;
     });
 
-    // 초기 분배 적용
-    subjects.forEach(s=>{ mockSubjectQuota[s]=0; }); // 초기화
+    // 초기 분배 적용 - 완전 초기화 후 현재 분야 과목만 설정
+    mockSubjectQuota = {};
+    subjects.forEach(s=>{ mockSubjectQuota[s]=0; });
     applyMockTotalDistribute();
 
     const html=subjects.map(s=>{
@@ -7801,17 +7884,74 @@ function ltmOpenSetupModal() {
     ltmSetupSplit   = ltmCount || 10;
     ltmSetupTotal   = ltmTotalCount || 0;
 
-    // ① 문제집(태그) 목록 생성
+    // ① 문제집(태그) 목록 생성 - 대분류(시험유형)별 그룹핑
     const tagList = document.getElementById('ltmSetupTagList');
     tagList.innerHTML = '';
     const allTags = [...new Set(bank.map(q => q.tag || '기타'))].sort();
+    
+    // 대분류별로 그룹핑
+    const grouped = { '산안기': [], '전기': [], '조경': [], '기타': [] };
     allTags.forEach(tag => {
-        const count = bank.filter(q => (q.tag || '기타') === tag).length;
-        const div = document.createElement('div');
-        div.className = 'workbook-item';
-        div.innerHTML = `<input type="checkbox" value="${tag}" ${activeTags.has(tag) ? 'checked' : ''} onchange="ltmSetupUpdatePreview()"><span style="flex:1">${tag}</span><span style="font-size:0.8em;color:var(--text-muted);background:var(--bg);padding:2px 6px;border-radius:8px">${count}</span>`;
-        div.onclick = e => { if(e.target.tagName !== 'INPUT') { const cb = div.querySelector('input'); cb.checked = !cb.checked; ltmSetupUpdatePreview(); } };
-        tagList.appendChild(div);
+        const field = fieldMap[tag] || getAutoField(tag) || '기타';
+        if(grouped[field]) grouped[field].push(tag);
+        else grouped['기타'].push(tag);
+    });
+    
+    // 대분류별 색상 및 이모지
+    const fieldColors = { '산안기': '#EF4444', '전기': '#F59E0B', '조경': '#10B981', '기타': '#94A3B8' };
+    const fieldEmojis = { '산안기': '🦺', '전기': '⚡', '조경': '🌳', '기타': '📁' };
+    
+    // 각 대분류별로 렌더링
+    Object.entries(grouped).forEach(([field, tags]) => {
+        if(tags.length === 0) return;
+        
+        const totalCount = tags.reduce((sum, t) => sum + bank.filter(q => (q.tag||'기타') === t).length, 0);
+        
+        // 대분류 헤더
+        const header = document.createElement('div');
+        header.className = 'ltm-workbook-category-header';
+        header.style.cssText = `
+            display:flex;align-items:center;justify-content:space-between;
+            padding:6px 10px;margin:4px 0 2px 0;
+            background:linear-gradient(135deg, ${fieldColors[field]}15, ${fieldColors[field]}08);
+            border-left:3px solid ${fieldColors[field]};
+            border-radius:6px;cursor:pointer;font-size:0.88em;
+        `;
+        header.innerHTML = `
+            <div style="display:flex;align-items:center;gap:6px">
+                <span>${fieldEmojis[field]}</span>
+                <span style="font-weight:700;color:${fieldColors[field]}">${field}</span>
+                <span style="font-size:0.8em;color:var(--text-muted)">(${tags.length}개·${totalCount}문제)</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px">
+                <button onclick="event.stopPropagation();ltmToggleWorkbookCategory('${field}',true)" style="font-size:0.7em;padding:2px 6px;border:1px solid var(--border);background:var(--surface);border-radius:4px;cursor:pointer">전체</button>
+                <button onclick="event.stopPropagation();ltmToggleWorkbookCategory('${field}',false)" style="font-size:0.7em;padding:2px 6px;border:1px solid var(--border);background:var(--surface);border-radius:4px;cursor:pointer">해제</button>
+                <span class="ltm-cat-arrow" data-field="${field}" style="font-size:0.8em;transition:transform 0.2s">▼</span>
+            </div>
+        `;
+        header.onclick = (e) => {
+            if(e.target.tagName === 'BUTTON') return;
+            ltmToggleCategoryCollapse(field);
+        };
+        tagList.appendChild(header);
+        
+        // 문제집 목록 컨테이너
+        const container = document.createElement('div');
+        container.className = 'ltm-workbook-category-items';
+        container.dataset.field = field;
+        container.style.cssText = 'padding-left:6px;';
+        
+        tags.forEach(tag => {
+            const count = bank.filter(q => (q.tag || '기타') === tag).length;
+            const div = document.createElement('div');
+            div.className = 'workbook-item';
+            div.style.cssText = 'padding:6px 8px;';
+            div.innerHTML = `<input type="checkbox" value="${tag}" data-field="${field}" ${activeTags.has(tag) ? 'checked' : ''} onchange="ltmSetupUpdatePreview()"><span style="flex:1;font-size:0.9em">${tag}</span><span style="font-size:0.75em;color:var(--text-muted);background:var(--bg);padding:2px 6px;border-radius:6px">${count}</span>`;
+            div.onclick = e => { if(e.target.tagName !== 'INPUT') { const cb = div.querySelector('input'); cb.checked = !cb.checked; ltmSetupUpdatePreview(); } };
+            container.appendChild(div);
+        });
+        
+        tagList.appendChild(container);
     });
 
     // ② 과목 목록 생성
@@ -7864,6 +8004,23 @@ function ltmOpenSetupModal() {
 function ltmSetupCheckAll(listId, check) {
     document.querySelectorAll(`#${listId} input`).forEach(cb => cb.checked = check);
     ltmSetupUpdatePreview();
+}
+
+/* 장기기억학습 문제집 대분류별 선택/해제 */
+function ltmToggleWorkbookCategory(field, check) {
+    document.querySelectorAll(`#ltmSetupTagList input[data-field="${field}"]`).forEach(cb => cb.checked = check);
+    ltmSetupUpdatePreview();
+}
+
+/* 장기기억학습 문제집 대분류 접기/펼치기 */
+function ltmToggleCategoryCollapse(field) {
+    const container = document.querySelector(`.ltm-workbook-category-items[data-field="${field}"]`);
+    const arrow = document.querySelector(`.ltm-cat-arrow[data-field="${field}"]`);
+    if(!container) return;
+    
+    const isHidden = container.style.display === 'none';
+    container.style.display = isHidden ? 'block' : 'none';
+    if(arrow) arrow.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(-90deg)';
 }
 
 /* 필터 칩 토글 (다중 선택 가능) */
