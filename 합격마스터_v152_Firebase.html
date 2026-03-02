@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-title" content="합격마스터">
     <meta name="format-detection" content="telephone=no">
     <meta name="theme-color" content="#4F46E5">
-    <title>합격마스터 (Ver.160)</title>
+    <title>합격마스터 (Ver.161)</title>
 
 <!-- Firebase SDK: body 끝에서 로드 -->
 <style>
@@ -4226,8 +4226,16 @@ window.onload = function() {
     if(savedArchive) try{ wrongArchive=JSON.parse(savedArchive); }catch(e){ wrongArchive=[]; }
 
     initActiveTagsAndSubjects();
+
+    // V161: 이전 화면 상태 복원 (필터, 분야, 셔플 등)
+    restoreSessionState();
+
     applyFilter(); updateUI(); updateStatsUI(); updateGoalUI(); updateBadges();
     initConfetti(); initSwipe();
+
+    // V161: 복원된 필터 칩 UI 동기화
+    restoreFilterChipUI();
+
     // 마지막 탭 복원
     const _lastTab = localStorage.getItem('lastTab_v156') || 'quiz';
     switchTab(_lastTab);
@@ -4334,6 +4342,103 @@ function initActiveTagsAndSubjects() {
 }
 
 /* ============================================================
+   V161 — 화면 상태 저장/복원 (State Restoration)
+============================================================ */
+function saveSessionState() {
+    try {
+        const state = {
+            currentFilter,
+            activeField,
+            isShuffleMode,
+            activeTags: [...activeTags],
+            activeSubjects: [...activeSubjects],
+            currentIndex
+        };
+        localStorage.setItem('sessionState_v161', JSON.stringify(state));
+    } catch(e) {}
+}
+
+function restoreSessionState() {
+    try {
+        const raw = localStorage.getItem('sessionState_v161');
+        if(!raw) return false;
+        const state = JSON.parse(raw);
+
+        // 필터 복원
+        if(state.currentFilter && state.currentFilter !== 'all') {
+            currentFilter = state.currentFilter;
+        }
+
+        // 분야 복원
+        if(state.activeField && state.activeField !== 'all') {
+            activeField = state.activeField;
+        }
+
+        // 셔플 모드 복원
+        if(state.isShuffleMode) {
+            isShuffleMode = true;
+        }
+
+        // 문제집/과목 선택 복원 (bank 데이터가 있을 때만)
+        if(bank.length > 0) {
+            const allTags = new Set(bank.map(q => q.tag || '기타'));
+            const allSubjects = new Set(bank.map(q => q.subject || '미분류(공통)'));
+
+            if(state.activeTags && state.activeTags.length > 0) {
+                // 저장된 태그 중 현재 bank에 존재하는 것만 복원
+                const validTags = state.activeTags.filter(t => allTags.has(t));
+                if(validTags.length > 0) activeTags = new Set(validTags);
+            }
+            if(state.activeSubjects && state.activeSubjects.length > 0) {
+                const validSubjects = state.activeSubjects.filter(s => allSubjects.has(s));
+                if(validSubjects.length > 0) activeSubjects = new Set(validSubjects);
+            }
+        }
+
+        return true;
+    } catch(e) {
+        return false;
+    }
+}
+
+/* V161: 복원된 상태를 UI 칩/버튼에 시각적으로 반영 */
+function restoreFilterChipUI() {
+    // 필터 칩 ON 표시
+    const filterMap = {
+        wrong:'btnWrong', bookmark:'btnBookmark', unanswered:'btnUnanswered',
+        unread:'btnUnread', viewed:'btnViewed', 'viewed-unsolved':'btnViewedUnsolved',
+        review:'btnReview', retry:'btnRetryMode'
+    };
+    ['btnWrong','btnBookmark','btnUnanswered','btnUnread','btnViewed','btnViewedUnsolved','btnReview','btnRetryMode'].forEach(id => {
+        document.getElementById(id)?.classList.remove('chip-on');
+    });
+    if(filterMap[currentFilter]) {
+        document.getElementById(filterMap[currentFilter])?.classList.add('chip-on');
+    }
+
+    // 분야 칩 ON 표시
+    document.querySelectorAll('.field-chip').forEach(el => el.classList.remove('active'));
+    const fieldChipId = activeField === 'all' ? 'fieldAll' : null;
+    if(fieldChipId) {
+        document.getElementById(fieldChipId)?.classList.add('active');
+    } else if(activeField !== 'all') {
+        // 분야별 칩은 JS 동적 렌더링이므로 renderFieldBar 후 처리됨
+        setTimeout(() => {
+            document.querySelectorAll('.field-chip').forEach(el => {
+                if(el.dataset.field === activeField) el.classList.add('active');
+            });
+        }, 100);
+    }
+
+    // 셔플 버튼 상태 반영
+    const shuffleBtn = document.getElementById('btnShuffle');
+    if(shuffleBtn) {
+        if(isShuffleMode) shuffleBtn.classList.add('active');
+        else shuffleBtn.classList.remove('active');
+    }
+}
+
+/* ============================================================
    TOAST
 ============================================================ */
 function showToast(msg, type) {
@@ -4413,6 +4518,8 @@ function applyFilter() {
 function updateUI() {
     // 현재 문제 인덱스 저장 (앱 재시작 시 복원용)
     localStorage.setItem('lastIndex_v156', String(currentIndex));
+    // V161: 필터/선택 상태 저장
+    saveSessionState();
     const modeBadge = document.getElementById('modeStatusBadge');
     if(currentFilter==='wrong'){ modeBadge.innerText='오답노트'; modeBadge.style.cssText='display:inline-block;background:var(--danger-light);color:var(--danger);padding:3px 7px;border-radius:7px;font-size:0.72em;font-weight:700'; }
     else if(currentFilter==='retry'){ modeBadge.innerText='🔄 재도전'; modeBadge.style.cssText='display:inline-block;background:linear-gradient(135deg,#EF4444,#F97316);color:white;padding:3px 7px;border-radius:7px;font-size:0.72em;font-weight:700'; }
