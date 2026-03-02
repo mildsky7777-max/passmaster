@@ -8,12 +8,13 @@
     <meta name="apple-mobile-web-app-title" content="합격마스터">
     <meta name="format-detection" content="telephone=no">
     <meta name="theme-color" content="#4F46E5">
-    <title>합격마스터 (Ver.154)</title>
+    <title>합격마스터 (Ver.160)</title>
 
 <!-- Firebase SDK: body 끝에서 로드 -->
 <style>
 /* ===== CSS RESET & VARIABLES ===== */
 :root {
+    /* ── Apple HIG 컬러 팔레트 ── */
     --primary: #4F46E5;
     --primary-light: #EEF2FF;
     --primary-dark: #4338CA;
@@ -23,30 +24,50 @@
     --danger-light: #FEF2F2;
     --warning: #F59E0B;
     --warning-light: #FFFBEB;
-    --bg: #F1F5F9;
+
+    /* ── Apple 시스템 레이어 배경 ── */
+    --bg: #F2F2F7;          /* iOS systemGroupedBackground */
     --surface: #FFFFFF;
-    --border: #E2E8F0;
-    --text: #1E293B;
-    --text-sub: #64748B;
-    --text-muted: #94A3B8;
-    /* ── 아이폰 14 Pro + Edge 전용 수치 ── */
-    --top-h: 56px;       /* 앱 상단 탑바 */
-    --bottom-h: 60px;    /* 앱 하단 네비바 */
-    --safe-top: env(safe-area-inset-top, 0px);    /* iPhone 14 Pro: ~59px (Dynamic Island) */
-    --safe-bottom: env(safe-area-inset-bottom, 0px); /* iPhone 14 Pro: ~34px */
+    --surface2: #F9F9FB;    /* secondarySystemGroupedBackground */
+    --border: #E5E5EA;      /* iOS separator */
+    --border-light: #F2F2F7;
+
+    /* ── Apple 텍스트 레이어 ── */
+    --text: #000000;
+    --text-sub: #6C6C70;    /* iOS secondaryLabel */
+    --text-muted: #AEAEB2;  /* iOS tertiaryLabel */
+
+    /* ── 레이아웃 ── */
+    --top-h: 56px;
+    --bottom-h: 60px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
     --radius: 16px;
+    --radius-sm: 10px;
+    --radius-xs: 8px;
+
+    /* ── Apple 섀도 시스템 ── */
+    --shadow-xs: 0 1px 3px rgba(0,0,0,0.06);
     --shadow: 0 2px 12px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+
+    /* ── 앱 너비 ── */
     --app-max: 800px;
 
-    /* ===== 아이폰 최적화: 기준 글자 크기 ===== */
-    --fs-base: 16px;        /* 본문 기준 */
-    --fs-question: 1.15em;  /* 문제 텍스트 */
-    --fs-option: 1em;       /* 보기 */
-    --fs-card-q: 1.2em;     /* 카드 앞면 문제 */
-    --fs-card-a: 1.2em;     /* 카드 뒷면 정답 */
-    --fs-exp: 0.97em;       /* 해설 */
-    --fs-meta: 0.82em;      /* 태그/뱃지 */
-    --opt-padding: 15px 14px; /* 보기 터치 패딩 */
+    /* ── 타이포그래피 ── */
+    --fs-base: 16px;
+    --fs-question: 1.15em;
+    --fs-option: 1em;
+    --fs-card-q: 1.2em;
+    --fs-card-a: 1.2em;
+    --fs-exp: 0.97em;
+    --fs-meta: 0.82em;
+    --opt-padding: 15px 14px;
+
+    /* ── Apple 스프링 애니메이션 ── */
+    --spring: cubic-bezier(0.34, 1.2, 0.64, 1);
+    --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 *,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html{height:-webkit-fill-available;}
@@ -291,14 +312,14 @@ input,textarea,button,select { font-family: inherit; }
     max-width: var(--app-max);
     max-height: 88vh;
     background: var(--surface);
-    border-radius: 24px 24px 0 0;
+    border-radius: 28px 28px 0 0;
     z-index: 400;
     display: flex;
     flex-direction: column;
     pointer-events: none;
-    -webkit-transition: -webkit-transform 0.38s cubic-bezier(0.32,0.72,0,1);
-    transition: transform 0.38s cubic-bezier(0.32,0.72,0,1);
-    box-shadow: 0 -4px 32px rgba(0,0,0,0.18);
+    -webkit-transition: -webkit-transform 0.4s cubic-bezier(0.32,0.72,0,1);
+    transition: transform 0.4s cubic-bezier(0.32,0.72,0,1);
+    box-shadow: 0 -2px 0 rgba(0,0,0,0.04), 0 -8px 40px rgba(0,0,0,0.12);
 }
 .settings-panel.sheet-open {
     -webkit-transform: translateX(-50%) translateY(0);
@@ -632,22 +653,24 @@ input,textarea,button,select { font-family: inherit; }
 .options-list { display: flex; flex-direction: column; gap: 9px; margin-bottom: 0; }
 .option-item {
     padding: var(--opt-padding);
-    border: 2px solid var(--border);
+    border: 1.5px solid var(--border);
     border-radius: 14px;
     cursor: pointer;
     display: flex; align-items: flex-start; gap: 10px;
-    -webkit-transition: 0.15s; transition: 0.15s;
+    -webkit-transition: all 0.18s var(--spring); transition: all 0.18s var(--spring);
     background: var(--surface);
     font-size: var(--fs-option);
     line-height: 1.6;
     -webkit-tap-highlight-color: transparent;
     position: relative;
-    min-height: 52px; /* 터치 영역 최소 보장 */
+    min-height: 52px;
+    box-shadow: var(--shadow-xs);
 }
+.option-item:active { transform: scale(0.98); opacity: 0.85; }
 .option-item:hover { border-color: var(--primary); background: var(--primary-light); }
-.option-item.sel { border-color: var(--primary); background: var(--primary-light); font-weight: 600; }
-.option-item.correct { background: var(--success-light) !important; border-color: var(--success) !important; color: #065F46 !important; font-weight: 700; }
-.option-item.wrong { background: var(--danger-light) !important; border-color: var(--danger) !important; color: #991B1B !important; opacity: 0.75; }
+.option-item.sel { border-color: var(--primary); background: var(--primary-light); font-weight: 600; box-shadow: 0 0 0 3px rgba(79,70,229,0.12); }
+.option-item.correct { background: var(--success-light) !important; border-color: var(--success) !important; color: #065F46 !important; font-weight: 700; box-shadow: 0 0 0 3px rgba(16,185,129,0.18) !important; }
+.option-item.wrong { background: var(--danger-light) !important; border-color: var(--danger) !important; color: #991B1B !important; opacity: 0.8; box-shadow: 0 0 0 3px rgba(239,68,68,0.12) !important; }
 .opt-num {
     min-width: 26px; height: 26px; border-radius: 50%;
     background: var(--bg); color: var(--text-sub);
@@ -664,11 +687,13 @@ input,textarea,button,select { font-family: inherit; }
 /* Explanation box */
 .exp-box {
     margin-top: 20px;
-    background: #FAFBFF;
+    background: var(--surface2);
     padding: 18px;
-    border-radius: var(--radius);
-    border-left: 4px solid var(--primary);
-    -webkit-animation: slideDown 0.35s ease; animation: slideDown 0.35s ease;
+    border-radius: 18px;
+    border: none;
+    border-top: 3px solid var(--primary);
+    box-shadow: var(--shadow-md);
+    -webkit-animation: slideDown 0.32s var(--ease-out); animation: slideDown 0.32s var(--ease-out);
 }
 @-webkit-keyframes slideDown { from{opacity:0;-webkit-transform:translateY(-8px);transform:translateY(-8px);}to{opacity:1;-webkit-transform:translateY(0);transform:translateY(0);} }
 @keyframes slideDown { from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);} }
@@ -840,21 +865,23 @@ body.focus-mode #card-interface {
 }
 .card-front {
     background: var(--surface);
-    border: 2px solid var(--border);
+    border: 1.5px solid var(--border);
     justify-content: center; align-items: center;
     padding: 24px;
     text-align: center;
     overflow-y: auto;
+    box-shadow: var(--shadow);
 }
 .card-front-q { font-size: var(--fs-card-q); font-weight: 700; line-height: 1.7; letter-spacing: -0.01em; }
 .card-flip-hint { margin-top: 16px; color: var(--text-muted); font-size: 0.85em; flex-shrink: 0; }
 .card-back {
-    background: #FAFBFF;
-    border: 2px solid var(--primary);
+    background: linear-gradient(160deg, #FAFBFF 0%, #F0F4FF 100%);
+    border: 1.5px solid rgba(79,70,229,0.2);
     padding: 22px;
     -webkit-transform: rotateY(180deg); transform: rotateY(180deg);
     overflow-y: auto; -webkit-overflow-scrolling: touch;
     font-size: var(--fs-exp); line-height: 1.8;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
 }
 .card-inner.flipped .card-front { pointer-events: none; }
 .card-inner.flipped .card-back { pointer-events: auto; }
@@ -869,20 +896,20 @@ body.focus-mode #card-interface {
 /* ===== MODALS ===== */
 .modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(15,23,42,0.5); z-index: 9000; display: none;
+    background: rgba(0,0,0,0.4); z-index: 9000; display: none;
     justify-content: center; align-items: center;
-    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(12px) saturate(180%); backdrop-filter: blur(12px) saturate(180%);
     padding: 16px; box-sizing: border-box;
 }
 .modal-overlay.show { display: flex; }
 .modal-box {
     background: var(--surface); width: 100%; max-width: 500px;
-    border-radius: 22px; padding: 24px;
+    border-radius: 24px; padding: 24px;
     display: flex; flex-direction: column;
     max-height: 88vh;
-    -webkit-animation: popUp 0.28s ease; animation: popUp 0.28s ease;
+    -webkit-animation: popUp 0.24s var(--spring); animation: popUp 0.24s var(--spring);
     -webkit-overflow-scrolling: touch; overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.18), 0 0 0 0.5px rgba(0,0,0,0.06);
 }
 @-webkit-keyframes popUp { from{-webkit-transform:scale(0.92);transform:scale(0.92);opacity:0;} to{-webkit-transform:scale(1);transform:scale(1);opacity:1;} }
 @keyframes popUp { from{transform:scale(0.92);opacity:0;}to{transform:scale(1);opacity:1;} }
@@ -1249,36 +1276,40 @@ body.dark-mode {
     --danger-light: #450A0A;
     --warning: #FBBF24;
     --warning-light: #451A03;
-    --bg: #0F172A;
-    --surface: #1E293B;
-    --border: #334155;
-    --text: #F1F5F9;
-    --text-sub: #94A3B8;
-    --text-muted: #475569;
-    --shadow: 0 2px 12px rgba(0,0,0,0.35);
+    --bg: #1C1C1E;           /* iOS systemBackground dark */
+    --surface: #2C2C2E;      /* iOS secondarySystemBackground dark */
+    --surface2: #3A3A3C;
+    --border: #38383A;       /* iOS separator dark */
+    --border-light: #2C2C2E;
+    --text: #FFFFFF;
+    --text-sub: #AEAEB2;
+    --text-muted: #636366;
+    --shadow-xs: 0 1px 3px rgba(0,0,0,0.3);
+    --shadow: 0 2px 12px rgba(0,0,0,0.4);
+    --shadow-md: 0 4px 20px rgba(0,0,0,0.5);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
 }
 body.dark-mode .top-bar,
-body.dark-mode .bottom-nav { background: #1E293B; }
+body.dark-mode .bottom-nav { background: #2C2C2E; }
 body.dark-mode .top-bar-bg,
-body.dark-mode .bottom-nav-bg { background: #1E293B; }
-body.dark-mode .settings-panel { background: #1E293B; }
-body.dark-mode .modal-box { background: #1E293B !important; }
-body.dark-mode .archive-item { background: #0F172A; border-color: #1E293B; }
-body.dark-mode .sheet-header-visible { border-color: #334155; }
-body.dark-mode .quiz-surface { background: #1E293B; }
-body.dark-mode #card-interface { background: #0F172A; }
-body.dark-mode .card-front { background: #1E293B; border-color: #334155; }
-body.dark-mode .card-back { background: #0F172A; }
-body.dark-mode .main-wrap { background: #0F172A; }
-body.dark-mode .main-mode-tabs { background: #1E293B; border-color: #334155; }
-body.dark-mode .exp-box { background: #0F172A; }
-body.dark-mode .option-item { background: #1E293B; }
-body.dark-mode .option-item:hover { background: #1E1B4B; }
+body.dark-mode .bottom-nav-bg { background: #2C2C2E; }
+body.dark-mode .settings-panel { background: #2C2C2E; }
+body.dark-mode .modal-box { background: #2C2C2E !important; }
+body.dark-mode .archive-item { background: #1C1C1E; border-color: #2C2C2E; }
+body.dark-mode .sheet-header-visible { border-color: #38383A; }
+body.dark-mode .quiz-surface { background: #2C2C2E; }
+body.dark-mode #card-interface { background: #1C1C1E; }
+body.dark-mode .card-front { background: #2C2C2E; border-color: #38383A; }
+body.dark-mode .card-back { background: #1C1C1E; border-color: #3A3A3C; }
+body.dark-mode .main-wrap { background: #1C1C1E; }
+body.dark-mode .main-mode-tabs { background: #2C2C2E; border-color: #38383A; }
+body.dark-mode .exp-box { background: #1C1C1E; }
+body.dark-mode .option-item { background: #2C2C2E; }
+body.dark-mode .option-item:hover { background: #3A3A3C; }
 body.dark-mode .aq-done-note { background: #451A03; color: #FCD34D; }
-body.dark-mode .ios-confirm-box { background: #1E293B; }
-body.dark-mode .modal-box { background: #1E293B; }
+body.dark-mode .ios-confirm-box { background: #2C2C2E; }
 body.dark-mode input, body.dark-mode textarea, body.dark-mode select {
-    background: #0F172A; color: var(--text); border-color: var(--border);
+    background: #1C1C1E; color: var(--text); border-color: var(--border);
 }
 /* navFocusBtn dark mode — 아래 #navFocusBtn 블록에서 통합 처리 */
 body { transition: background 0.3s, color 0.3s; }
@@ -1318,47 +1349,93 @@ body { transition: background 0.3s, color 0.3s; }
 .mem-label-text.lv4 { color: #10B981; }
 .mem-label-text.lv5 { color: #3B82F6; }
 
-/* ===== CONFIDENCE RATING ===== */
+/* ===== CONFIDENCE RATING (사후 — 정답 시) ===== */
 .conf-rating {
-    display: none; flex-direction: column; gap: 8px;
-    margin-top: 14px; padding: 14px;
-    background: var(--bg); border-radius: 14px;
-    animation: slideDown 0.3s ease;
+    display: none; flex-direction: column; gap: 10px;
+    margin-top: 16px; padding: 16px;
+    background: var(--bg); border-radius: 18px;
+    -webkit-animation: slideDown 0.28s var(--ease-out); animation: slideDown 0.28s var(--ease-out);
+    border: 1px solid var(--border);
 }
 .conf-rating.show { display: flex; }
-.conf-title { font-size: 0.82em; font-weight: 700; color: var(--text-sub); text-align: center; }
+.conf-title { font-size: 0.85em; font-weight: 700; color: var(--text-sub); text-align: center; letter-spacing: -0.01em; }
 .conf-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .conf-btn {
-    padding: 10px 4px; border: 2px solid var(--border);
-    border-radius: 12px; background: var(--surface);
-    font-size: 0.8em; font-weight: 700; cursor: pointer;
-    display: flex; flex-direction: column; align-items: center; gap: 3px;
-    transition: 0.15s; color: var(--text);
+    padding: 12px 4px; border: 1.5px solid var(--border);
+    border-radius: 14px; background: var(--surface);
+    font-size: 0.82em; font-weight: 700; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    -webkit-transition: all 0.18s var(--spring); transition: all 0.18s var(--spring);
+    color: var(--text); box-shadow: var(--shadow-xs);
 }
-.conf-btn:active { transform: scale(0.95); }
-.conf-btn.hard { border-color: #EF4444; background: #FEF2F2; color: #991B1B; }
+.conf-btn:active { -webkit-transform: scale(0.93); transform: scale(0.93); }
+.conf-btn.hard   { border-color: #EF4444; background: #FEF2F2; color: #991B1B; }
 .conf-btn.medium { border-color: #F59E0B; background: #FFFBEB; color: #92400E; }
-.conf-btn.easy { border-color: #10B981; background: #ECFDF5; color: #065F46; }
-.conf-emoji { font-size: 1.4em; }
+.conf-btn.easy   { border-color: #10B981; background: #ECFDF5; color: #065F46; }
+.conf-emoji { font-size: 1.5em; }
+
+/* ===== PRE-ANSWER CONFIDENCE (사전 — 답 선택 전, 메타인지 핵심) ===== */
+.pre-conf-wrap {
+    display: none; flex-direction: column; gap: 8px;
+    margin-bottom: 14px; padding: 14px 16px;
+    background: linear-gradient(135deg, #EFF6FF, #F5F3FF);
+    border-radius: 16px;
+    border: 1.5px solid #C7D2FE;
+    -webkit-animation: slideDown 0.28s var(--ease-out); animation: slideDown 0.28s var(--ease-out);
+}
+.pre-conf-wrap.show { display: flex; }
+.pre-conf-label {
+    font-size: 0.82em; font-weight: 800; color: #4F46E5;
+    display: flex; align-items: center; gap: 6px;
+}
+.pre-conf-label::after { content: ''; flex:1; height:1px; background: rgba(79,70,229,0.15); }
+.pre-conf-btns { display: flex; gap: 8px; }
+.pre-conf-btn {
+    flex: 1; padding: 9px 4px; border-radius: 12px;
+    border: 1.5px solid transparent; font-size: 0.82em; font-weight: 700;
+    cursor: pointer; text-align: center; line-height: 1.35;
+    -webkit-transition: all 0.15s var(--spring); transition: all 0.15s var(--spring);
+    background: rgba(255,255,255,0.8);
+}
+.pre-conf-btn:active { -webkit-transform: scale(0.93); transform: scale(0.93); }
+.pre-conf-btn.selected { border-color: #4F46E5; background: white; box-shadow: 0 2px 8px rgba(79,70,229,0.2); }
+.pre-conf-btn.pc-sure   { color: #065F46; }
+.pre-conf-btn.pc-unsure { color: #92400E; }
+.pre-conf-btn.pc-guess  { color: #991B1B; }
+.pre-conf-btn.pc-sure.selected   { border-color: #10B981; background: #ECFDF5; }
+.pre-conf-btn.pc-unsure.selected { border-color: #F59E0B; background: #FFFBEB; }
+.pre-conf-btn.pc-guess.selected  { border-color: #EF4444; background: #FEF2F2; }
+
+/* ===== 사전확신 경고 뱃지 (확신했는데 틀렸을 때) ===== */
+.danger-metacog-badge {
+    display: none; align-items: center; gap: 8px;
+    padding: 10px 14px; border-radius: 12px;
+    background: linear-gradient(135deg, #7C3AED, #4F46E5);
+    color: white; font-size: 0.82em; font-weight: 700;
+    margin-top: 10px;
+    -webkit-animation: slideDown 0.3s var(--ease-out); animation: slideDown 0.3s var(--ease-out);
+}
+.danger-metacog-badge.show { display: flex; }
 
 /* ===== WRONG REFLECTION ===== */
 .reflect-box {
-    display: none; margin-top: 12px; padding: 14px;
-    background: var(--danger-light); border-radius: 14px;
-    border: 1px solid #FECACA;
-    animation: slideDown 0.3s ease;
+    display: none; margin-top: 14px; padding: 16px;
+    background: var(--bg); border-radius: 18px;
+    border: 1.5px solid var(--border);
+    -webkit-animation: slideDown 0.28s var(--ease-out); animation: slideDown 0.28s var(--ease-out);
 }
 .reflect-box.show { display: block; }
-.reflect-title { font-size: 0.82em; font-weight: 700; color: #991B1B; margin-bottom: 8px; }
-.reflect-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.reflect-title { font-size: 0.85em; font-weight: 800; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.reflect-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .reflect-btn {
-    padding: 8px 4px; border: none; border-radius: 10px;
-    background: white; font-size: 0.75em; font-weight: 700;
-    color: #374151; cursor: pointer; transition: 0.15s;
-    text-align: center; line-height: 1.4;
+    padding: 10px 6px; border: 1.5px solid var(--border); border-radius: 14px;
+    background: var(--surface); font-size: 0.78em; font-weight: 700;
+    color: var(--text); cursor: pointer;
+    -webkit-transition: all 0.18s var(--spring); transition: all 0.18s var(--spring);
+    text-align: center; line-height: 1.5; box-shadow: var(--shadow-xs);
 }
-.reflect-btn:active { transform: scale(0.95); opacity: 0.8; }
-.reflect-btn.selected { background: #EF4444; color: white; }
+.reflect-btn:active { -webkit-transform: scale(0.93); transform: scale(0.93); }
+.reflect-btn.selected { background: var(--danger); color: white; border-color: var(--danger); }
 
 /* ===== BRAIN BREAK ===== */
 .brain-break-banner {
@@ -1385,33 +1462,32 @@ body { transition: background 0.3s, color 0.3s; }
     padding: 3px 8px; border-radius: 8px;
 }
 
-/* ===== UI POLISH — Apple style ===== */
-.q-text { font-size: 1.25em; font-weight: 700; line-height: 1.65; letter-spacing: -0.01em; }
+/* ===== V160 UI POLISH ===== */
+.q-text { font-size: 1.2em; font-weight: 700; line-height: 1.7; letter-spacing: -0.02em; color: var(--text); }
 
-/* Bigger option items */
-.option-item { padding: 15px 14px; border-radius: 16px; }
-
-/* Smoother spring animations */
-.option-item, .conf-btn, .reflect-btn, .s-btn, .nav-btn {
-    -webkit-transition: all 0.18s cubic-bezier(0.34,1.2,0.64,1);
-    transition: all 0.18s cubic-bezier(0.34,1.2,0.64,1);
+/* 버튼 공통 스프링 트랜지션 */
+.option-item, .conf-btn, .reflect-btn, .s-btn, .nav-btn, .pre-conf-btn {
+    -webkit-transition: all 0.18s var(--spring);
+    transition: all 0.18s var(--spring);
 }
 
-/* Feedback card polish */
-.exp-box {
-    border-radius: 18px;
-    border-left: none;
-    border-top: 4px solid var(--primary);
-    box-shadow: 0 4px 20px rgba(79,70,229,0.08);
+/* s-btn (설정 버튼) 미세 튜닝 */
+.s-btn {
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-xs);
 }
+.s-btn:active { -webkit-transform: scale(0.93) !important; transform: scale(0.93) !important; }
 
-/* Correct/wrong feedback glow */
-.option-item.correct {
-    box-shadow: 0 0 0 3px rgba(16,185,129,0.25);
-}
-.option-item.wrong {
-    box-shadow: 0 0 0 3px rgba(239,68,68,0.2);
-}
+/* nav-btn */
+.nav-btn { border-radius: 16px; box-shadow: var(--shadow-xs); }
+.nav-btn-primary { box-shadow: 0 4px 14px rgba(79,70,229,0.28); }
+
+/* mini-dash 카드 */
+.mini-dash { border-radius: 20px; border: none; box-shadow: var(--shadow); }
+.mini-dash-item { border-radius: 14px; }
+
+/* collapsible 패널 */
+.collapsible-panel { border-radius: 18px; border: none; box-shadow: var(--shadow); }
 
 /* ===== VER.81 NEW STYLES ===== */
 
@@ -2409,6 +2485,206 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
     margin-top: 2px;
 }
 
+/* ================================================================
+   V160 — 뇌과학 학습 강화 + Apple 디자인 추가 CSS
+================================================================ */
+
+/* ── 망각곡선 긴급도 뱃지 ── */
+.forgetting-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: 10px;
+    font-size: 0.72em; font-weight: 800;
+    background: linear-gradient(135deg, #7C3AED, #4F46E5);
+    color: white; vertical-align: middle;
+    -webkit-animation: pulse-glow 2s infinite; animation: pulse-glow 2s infinite;
+}
+@-webkit-keyframes pulse-glow {
+    0%,100% { box-shadow: 0 0 0 0 rgba(124,58,237,0.4); }
+    50% { box-shadow: 0 0 0 5px rgba(124,58,237,0); }
+}
+@keyframes pulse-glow {
+    0%,100% { box-shadow: 0 0 0 0 rgba(124,58,237,0.4); }
+    50% { box-shadow: 0 0 0 5px rgba(124,58,237,0); }
+}
+
+/* ── 인터리빙 강화 배지 (과목 전환 표시) ── */
+.interleave-switch-card {
+    display: none; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 14px;
+    background: linear-gradient(135deg, #F5F3FF, #EFF6FF);
+    border: 1.5px solid #C4B5FD;
+    margin-bottom: 12px; font-size: 0.82em; font-weight: 700;
+    color: #5B21B6;
+    -webkit-animation: slideDown 0.28s var(--ease-out); animation: slideDown 0.28s var(--ease-out);
+}
+.interleave-switch-card.show { display: flex; }
+
+/* ── 기억 강도 진행바 (도트 → 바 업그레이드) ── */
+.mem-strength {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--bg); border-radius: 10px;
+    padding: 4px 8px;
+}
+.mem-bar-wrap {
+    width: 60px; height: 5px; border-radius: 3px;
+    background: var(--border); overflow: hidden;
+}
+.mem-bar-fill {
+    height: 100%; border-radius: 3px;
+    -webkit-transition: width 0.5s var(--ease-out), background 0.5s;
+    transition: width 0.5s var(--ease-out), background 0.5s;
+}
+
+/* ── 다음 복습일 시각화 ── */
+.next-review-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: 10px;
+    font-size: 0.72em; font-weight: 700;
+    background: var(--primary-light); color: var(--primary);
+    white-space: nowrap;
+}
+.next-review-chip.urgent { background: var(--danger-light); color: var(--danger); }
+.next-review-chip.soon   { background: var(--warning-light); color: #92400E; }
+
+/* ── 학습 흐름 진행 표시 (상단 진행바) ── */
+.session-progress-bar {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 3px; z-index: 201; pointer-events: none;
+}
+.session-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4F46E5, #7C3AED, #EC4899);
+    -webkit-transition: width 0.4s var(--ease-out); transition: width 0.4s var(--ease-out);
+    border-radius: 0 2px 2px 0;
+}
+
+/* ── 퀴즈 서피스 Apple 카드 스타일 ── */
+.quiz-surface {
+    background: var(--surface);
+    border-radius: 0;
+    padding: 20px;
+}
+
+/* ── 인라인 확인 버튼 Apple 스타일 ── */
+#inlineConfirmWrap { margin-top: 16px; }
+#inlineConfirmBtn {
+    width: 100%; padding: 15px;
+    background: var(--primary); color: white;
+    border: none; border-radius: 14px;
+    font-size: 1em; font-weight: 800; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(79,70,229,0.3);
+    -webkit-transition: all 0.18s var(--spring); transition: all 0.18s var(--spring);
+    letter-spacing: -0.01em;
+}
+#inlineConfirmBtn:active { -webkit-transform: scale(0.97); transform: scale(0.97); }
+#inlineConfirmBtn.answered {
+    background: var(--bg); color: var(--text-sub);
+    box-shadow: none;
+}
+
+/* ── wrong-deep-box 업그레이드 ── */
+.wrong-deep-box {
+    margin-top: 14px; padding: 16px;
+    background: var(--bg); border-radius: 18px;
+    border: 1.5px solid var(--border);
+}
+.wrong-deep-title { font-size: 0.88em; font-weight: 800; color: var(--text); margin-bottom: 10px; }
+.wrong-deep-input {
+    width: 100%; margin-top: 8px;
+    border: 1.5px solid var(--border); padding: 12px 14px;
+    border-radius: 12px; font-size: 0.95em; color: var(--text);
+    background: var(--surface); resize: none; outline: none;
+    -webkit-transition: border-color 0.2s; transition: border-color 0.2s;
+    font-family: inherit;
+}
+.wrong-deep-input:focus { border-color: var(--primary); }
+
+/* ── 뇌과학 인사이트 카드 (성과 분석) ── */
+.neuro-insight {
+    display: none; padding: 14px 16px;
+    background: linear-gradient(135deg, #1E1B4B, #2D1B69);
+    border-radius: 18px; color: white; margin-top: 16px;
+    -webkit-animation: slideDown 0.3s var(--ease-out); animation: slideDown 0.3s var(--ease-out);
+}
+.neuro-insight.show { display: block; }
+.neuro-insight-title { font-size: 0.85em; font-weight: 800; opacity: 0.9; margin-bottom: 6px; }
+.neuro-insight-body { font-size: 0.8em; line-height: 1.6; opacity: 0.8; }
+
+/* ── 피드백 애니메이션 강화 ── */
+@-webkit-keyframes feedbackCorrect {
+    0% { -webkit-transform: scale(1); transform: scale(1); }
+    30% { -webkit-transform: scale(1.03); transform: scale(1.03); }
+    100% { -webkit-transform: scale(1); transform: scale(1); }
+}
+@keyframes feedbackCorrect {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.03); }
+    100% { transform: scale(1); }
+}
+@-webkit-keyframes feedbackWrong {
+    0%,100% { -webkit-transform: translateX(0); transform: translateX(0); }
+    20% { -webkit-transform: translateX(-6px); transform: translateX(-6px); }
+    40% { -webkit-transform: translateX(6px); transform: translateX(6px); }
+    60% { -webkit-transform: translateX(-4px); transform: translateX(-4px); }
+    80% { -webkit-transform: translateX(4px); transform: translateX(4px); }
+}
+@keyframes feedbackWrong {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+}
+.feedback-correct { -webkit-animation: feedbackCorrect 0.5s var(--ease-out); animation: feedbackCorrect 0.5s var(--ease-out); }
+.feedback-wrong   { -webkit-animation: feedbackWrong 0.4s var(--ease-out); animation: feedbackWrong 0.4s var(--ease-out); }
+.feedback-goal    { outline: 3px solid var(--success) !important; outline-offset: 2px; }
+
+/* ── 토스트 Apple 스타일 ── */
+.toast-msg {
+    background: rgba(28,28,30,0.92);
+    color: white; padding: 12px 20px;
+    border-radius: 28px; font-size: 0.9em; font-weight: 600;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%);
+    border: 0.5px solid rgba(255,255,255,0.12);
+}
+.toast-msg.success { background: rgba(16,185,129,0.95); }
+.toast-msg.warning { background: rgba(239,68,68,0.95); }
+
+/* ── Brain Break 배너 업그레이드 ── */
+.brain-break-banner {
+    border-radius: 20px !important;
+    box-shadow: 0 8px 32px rgba(79,70,229,0.4), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+}
+
+/* ── 아카이브 아이템 ── */
+.archive-item { border-radius: 16px !important; border-left-width: 3px !important; }
+
+/* ── 반응형: 작은 화면 ── */
+@media (max-width: 400px) {
+    :root { --fs-base: 15px; --fs-question: 1.05em; --fs-option: 0.97em; }
+    .nav-btn { font-size: 0.75em; }
+}
+@media (max-width: 480px) {
+    :root { --fs-question: 1.1em; --opt-padding: 14px 13px; }
+    .quiz-surface { padding: 16px 16px 20px; }
+    .options-list { gap: 10px; }
+    .option-item { min-height: 54px; }
+    .nav-btn { font-size: 0.78em; height: 46px; }
+    .nav-btn-primary { font-size: 0.88em; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+    :root { --top-h: 44px; --bottom-h: 52px; }
+    .quiz-surface { padding: 12px 20px; }
+    .q-text { margin-bottom: 12px; }
+    .options-list { gap: 7px; }
+    .option-item { min-height: 44px; }
+}
+@media (min-width: 700px) {
+    .quiz-surface { padding: 32px 40px; }
+    .card-front, .card-back { padding: 32px 40px; }
+}
+
 </style>
 </head>
 <body>
@@ -2416,6 +2692,9 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
 <!-- Confetti + Toasts -->
 <canvas id="confetti-canvas"></canvas>
 <div id="toastContainer" class="toast-container"></div>
+
+<!-- V160: 세션 진행바 (상단 얇은 그라디언트) -->
+<div class="session-progress-bar"><div class="session-progress-fill" id="sessionProgressFill" style="width:0%"></div></div>
 
 <!-- Background strips for full-width appearance on desktop -->
 <div class="top-bar-bg"></div>
@@ -2515,6 +2794,26 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                 </div>
             </div>
             <div class="q-text" id="quizQuestion">문제를 불러오세요.</div>
+
+            <!-- V160: 인터리빙 과목 전환 알림 -->
+            <div class="interleave-switch-card" id="interleaveSwitchCard">
+                <span style="font-size:1.4em">🔀</span>
+                <div>
+                    <div style="font-size:0.88em;font-weight:800">과목 전환!</div>
+                    <div id="interleaveSwitchText" style="font-size:0.78em;opacity:0.75;margin-top:2px">다른 과목으로 넘어갑니다</div>
+                </div>
+            </div>
+
+            <!-- V160: 사전 확신도 입력 (답 선택 전) - 핵심 메타인지 기능 -->
+            <div class="pre-conf-wrap" id="preConfWrap">
+                <div class="pre-conf-label">🧠 답을 고르기 전, 자신감은?</div>
+                <div class="pre-conf-btns">
+                    <button class="pre-conf-btn pc-sure" onclick="setPreConf('sure')">✅ 확실해요<br><small style="opacity:0.7;font-weight:600">개념 알고 있음</small></button>
+                    <button class="pre-conf-btn pc-unsure" onclick="setPreConf('unsure')">🤔 애매해요<br><small style="opacity:0.7;font-weight:600">가물가물함</small></button>
+                    <button class="pre-conf-btn pc-guess" onclick="setPreConf('guess')">😅 모르겠어요<br><small style="opacity:0.7;font-weight:600">찍을 것 같음</small></button>
+                </div>
+            </div>
+
             <!-- 🧠 Active Recall: 보기 가리기 영역 -->
             <div id="arThinkPrompt" class="ar-think-prompt" style="display:none">
                 🧠 먼저 머릿속으로 정답을 떠올려보세요...<br>
@@ -2574,13 +2873,21 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                 </div>
                 <!-- Wrong Answer Reflection -->
                 <div class="reflect-box" id="reflectBox">
-                    <div class="reflect-title">💭 어디서 막혔나요? (메타인지 학습)</div>
-                    <div class="reflect-btns">
+                    <div class="reflect-title">💭 어디서 막혔나요?</div>
+                    <!-- V160: 확신했는데 틀렸을 때 경고 -->
+                    <div class="danger-metacog-badge" id="dangerMetacogBadge">
+                        <span style="font-size:1.3em">⚠️</span>
+                        <div>
+                            <div style="font-size:0.85em;font-weight:800">확신했는데 틀렸어요!</div>
+                            <div style="font-size:0.75em;opacity:0.85">이 개념을 잘못 이해하고 있을 수 있어요. 반드시 복습하세요.</div>
+                        </div>
+                    </div>
+                    <div class="reflect-btns" style="margin-top:10px">
                         <button class="reflect-btn" onclick="recordReflect('misconception')">🔴 개념 오해<br><span style="font-size:0.85em;opacity:0.7">잘못 알고 있었음</span></button>
                         <button class="reflect-btn" onclick="recordReflect('careless')">🟡 실수<br><span style="font-size:0.85em;opacity:0.7">알았는데 틀림</span></button>
                         <button class="reflect-btn" onclick="recordReflect('unknown')">⚪ 처음 봄<br><span style="font-size:0.85em;opacity:0.7">몰랐음</span></button>
                     </div>
-                    <button id="inlineRetryBtn" onclick="inlineRetry()" style="width:100%;margin-top:10px;padding:11px;background:#FEE2E2;color:#B91C1C;border:none;border-radius:12px;font-size:0.9em;font-weight:800;cursor:pointer;-webkit-tap-highlight-color:transparent">
+                    <button id="inlineRetryBtn" onclick="inlineRetry()" style="width:100%;margin-top:10px;padding:13px;background:var(--danger);color:white;border:none;border-radius:14px;font-size:0.92em;font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(239,68,68,0.3);-webkit-transition:all 0.18s var(--spring);transition:all 0.18s var(--spring)">
                         🔄 바로 다시 풀기
                     </button>
                 </div>
@@ -3115,6 +3422,7 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
             <div class="nav-tab" id="dash-tab-subject" onclick="switchDashTab('subject')">과목별</div>
             <div class="nav-tab" id="dash-tab-field" onclick="switchDashTab('field')">🏷 분야별</div>
             <div class="nav-tab" id="dash-tab-heatmap" onclick="switchDashTab('heatmap')">📆 히트맵</div>
+            <div class="nav-tab" id="dash-tab-metacog" onclick="switchDashTab('metacog')">🧠 메타인지</div>
         </div>
         <div style="margin-bottom:16px; padding:14px; background:var(--bg); border-radius:12px;">
             <div style="font-size:0.85em; color:var(--text-sub); margin-bottom:4px">전체 정답률</div>
@@ -3147,6 +3455,11 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                 <span>많음</span>
             </div>
             <div id="heatmapSummary" style="margin-top:14px; padding:12px; background:var(--bg); border-radius:12px; font-size:0.84em; color:var(--text-sub); line-height:1.7"></div>
+        </div>
+
+        <!-- V160: 메타인지 분석 탭 -->
+        <div id="dashContentMetacog" style="display:none">
+            <div id="metacogContent" style="font-size:0.88em;line-height:1.7"></div>
         </div>
     </div>
 </div>
@@ -3891,6 +4204,17 @@ let brainBreakDismissed = false;
 let reflectData = JSON.parse(localStorage.getItem('reflectData_v80') || '{}'); // {misconception,careless,unknown}
 
 /* ============================================================
+   V160 — 뇌과학 강화 전역 변수
+============================================================ */
+let preConfidence = null;         // 사전 확신도: 'sure' | 'unsure' | 'guess' | null
+let preConfEnabled = true;        // 사전 확신도 기능 ON/OFF
+let lastSubject = '';             // 인터리빙: 이전 과목 추적
+let sessionAnswered = 0;          // 세션 내 답한 문제 수 (진행바용)
+let saveDebounceTimer = null;     // 성능: localStorage 배치 저장 타이머
+let renderPending = false;        // 성능: 불필요 재렌더 방지 플래그
+let metacogStats = JSON.parse(localStorage.getItem('metacogStats_v160') || '{"sureRight":0,"sureWrong":0,"unsureRight":0,"unsureWrong":0,"guessRight":0,"guessWrong":0}');
+
+/* ============================================================
    INIT
 ============================================================ */
 window.onload = function() {
@@ -3956,6 +4280,15 @@ window.onload = function() {
     try { document.getElementById('interleaveToggle').checked = interleaveMode; } catch(e) {}
     accuracyHistory2 = JSON.parse(localStorage.getItem('accHistory_v70') || '[]');
     reflectData = JSON.parse(localStorage.getItem('reflectData_v80') || '{"misconception":0,"careless":0,"unknown":0}');
+
+    // V160 inits
+    metacogStats = JSON.parse(localStorage.getItem('metacogStats_v160') || '{"sureRight":0,"sureWrong":0,"unsureRight":0,"unsureWrong":0,"guessRight":0,"guessWrong":0}');
+    updateSessionProgressBar();
+    // 앱 종료 전 즉시 저장 (iOS Safari 백그라운드 전환 대응)
+    document.addEventListener('visibilitychange', () => {
+        if(document.visibilityState === 'hidden') saveDataImmediate();
+    });
+    window.addEventListener('pagehide', saveDataImmediate);
 
     // Ver.82 sync
     updateSyncMainBtn();
@@ -4065,26 +4398,9 @@ function applyFilter() {
     } else {
         indices.sort((a,b)=>a-b);
     }
-    // Interleaving: shuffle by mixing subjects rather than grouping them
+    // V160: 인터리빙 — 연속 3개 이상 같은 과목 방지 알고리즘 적용
     if(interleaveMode && indices.length > 1) {
-        // Group by subject then interleave
-        const bySubject = {};
-        indices.forEach(idx => {
-            const s = bank[idx].subject || '미분류(공통)';
-            if(!bySubject[s]) bySubject[s] = [];
-            bySubject[s].push(idx);
-        });
-        const groups = Object.values(bySubject).map(g => {
-            // shuffle each group
-            for(let i=g.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[g[i],g[j]]=[g[j],g[i]];}
-            return g;
-        }).sort((a,b) => b.length - a.length);
-        const interleaved = [];
-        let safety = 0;
-        while(groups.some(g=>g.length>0) && safety++ < 10000) {
-            for(const g of groups) { if(g.length > 0) interleaved.push(g.shift()); }
-        }
-        indices = interleaved;
+        indices = applyInterleaveShuffle(indices);
     }
 
     filteredIndices=indices;
@@ -4310,6 +4626,41 @@ function updateUI() {
     updateCardArrows();
     // Ver.70: start time limit
     if(timeLimitEnabled) { const q2=bank[filteredIndices[currentIndex]]; if(q2&&!q2.my_status) startTimeLimit(); else stopTimeLimit(); } else { stopTimeLimit(); }
+
+    /* ── V160: 세션 진행바 업데이트 ── */
+    updateSessionProgressBar();
+
+    /* ── V160: 사전 확신도 초기화 ── */
+    preConfidence = null;
+    const pcWrap = document.getElementById('preConfWrap');
+    if(pcWrap) {
+        if(preConfEnabled && q && !q.my_status) {
+            pcWrap.classList.add('show');
+            pcWrap.querySelectorAll('.pre-conf-btn').forEach(b => b.classList.remove('selected'));
+        } else {
+            pcWrap.classList.remove('show');
+        }
+    }
+
+    /* ── V160: 인터리빙 과목 전환 감지 ── */
+    if(interleaveMode && q) {
+        const curSubject = q.subject || '';
+        const card = document.getElementById('interleaveSwitchCard');
+        const txt = document.getElementById('interleaveSwitchText');
+        if(card) {
+            if(lastSubject && curSubject && curSubject !== lastSubject) {
+                if(txt) txt.innerText = `${lastSubject} → ${curSubject}`;
+                card.classList.add('show');
+                setTimeout(() => card.classList.remove('show'), 2500);
+            } else {
+                card.classList.remove('show');
+            }
+        }
+        if(curSubject) lastSubject = curSubject;
+    }
+
+    /* ── V160: 메모리 강도 바 업데이트 ── */
+    renderMemStrengthV160(q);
 }
 
 /* ============================================================
@@ -4638,6 +4989,17 @@ function checkAnswer() {
     q.my_status=isCorrect?'correct':'wrong';
     q.my_ans=myAns; q.isViewed=true;
 
+    /* ── V160: 사전 확신도 저장 + 메타인지 통계 ── */
+    if(preConfidence) {
+        q._preConf = preConfidence;
+        const key = preConfidence + (isCorrect ? 'Right' : 'Wrong');
+        metacogStats[key] = (metacogStats[key] || 0) + 1;
+        localStorage.setItem('metacogStats_v160', JSON.stringify(metacogStats));
+    }
+    // 사전확신도 UI 숨기기
+    const pcWrap = document.getElementById('preConfWrap');
+    if(pcWrap) pcWrap.classList.remove('show');
+
     // VER.89: 문제별 풀이 횟수 추적
     q.solve_count = (q.solve_count || 0) + 1;
     // E: 풀이 소요시간 누적
@@ -4754,6 +5116,10 @@ function checkAnswer() {
         showBrainBreak();
     }
 
+    // V160: 세션 답변 카운트 업데이트 (진행바)
+    sessionAnswered++;
+    updateSessionProgressBar();
+
     // Show confidence rating (correct) or reflection (wrong)
     if(isCorrect) {
         if(!autoNextEnabled) {
@@ -4764,6 +5130,11 @@ function checkAnswer() {
     } else {
         setTimeout(()=>{
             document.getElementById('reflectBox').classList.add('show');
+            // V160: 확신했는데 틀렸을 때 메타인지 경고 표시
+            const dangerBadge = document.getElementById('dangerMetacogBadge');
+            if(dangerBadge) {
+                dangerBadge.style.display = (preConfidence === 'sure') ? 'flex' : 'none';
+            }
             // A: 재도전 버튼 표시
             const retryBtn = document.getElementById('inlineRetryBtn');
             if(retryBtn) retryBtn.style.display = 'block';
@@ -4887,6 +5258,58 @@ function trackDailyActivity() {
     Object.keys(heatmapData).forEach(k=>{ if(k<cutoffStr) delete heatmapData[k]; });
     localStorage.setItem('heatmap_v50',JSON.stringify(heatmapData));
 }
+function renderMetacogDashboard() {
+    const el = document.getElementById('metacogContent');
+    if(!el) return;
+    const s = metacogStats;
+    const total = Object.values(s).reduce((a,b)=>a+b,0);
+    if(total === 0) {
+        el.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-muted)">
+            <div style="font-size:2.5em;margin-bottom:8px">🧠</div>
+            <div style="font-weight:700;margin-bottom:4px">아직 데이터가 없어요</div>
+            <div style="font-size:0.88em">사전 확신도를 입력하면서 문제를 풀어보세요!</div>
+        </div>`;
+        return;
+    }
+    const sureTotal = s.sureRight + s.sureWrong;
+    const unsureTotal = s.unsureRight + s.unsureWrong;
+    const guessTotal = s.guessRight + s.guessWrong;
+    const sureRate = sureTotal ? Math.round(s.sureRight/sureTotal*100) : 0;
+    const unsureRate = unsureTotal ? Math.round(s.unsureRight/unsureTotal*100) : 0;
+    const guessRate = guessTotal ? Math.round(s.guessRight/guessTotal*100) : 0;
+    // 메타인지 정확도: 확신과 실제 결과의 일치도
+    const metacogScore = sureTotal >= 5
+        ? (sureRate >= 80 ? '🟢 우수' : sureRate >= 60 ? '🟡 보통' : '🔴 개선 필요')
+        : '📊 데이터 수집 중';
+    el.innerHTML = `
+        <div style="padding:14px;background:linear-gradient(135deg,#1E1B4B,#2D1B69);border-radius:16px;color:white;margin-bottom:12px">
+            <div style="font-size:0.78em;opacity:0.8;margin-bottom:4px">메타인지 정확도</div>
+            <div style="font-size:1.4em;font-weight:900">${metacogScore}</div>
+            <div style="font-size:0.75em;opacity:0.7;margin-top:4px">확신할 때 실제 정답률: <b>${sureRate}%</b></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+            ${[
+                {label:'✅ 확실', right:s.sureRight, wrong:s.sureWrong, color:'#10B981'},
+                {label:'🤔 애매', right:s.unsureRight, wrong:s.unsureWrong, color:'#F59E0B'},
+                {label:'😅 모름', right:s.guessRight, wrong:s.guessWrong, color:'#EF4444'}
+            ].map(item => {
+                const t = item.right + item.wrong;
+                const rate = t ? Math.round(item.right/t*100) : 0;
+                return `<div style="background:var(--bg);border-radius:14px;padding:12px 8px;text-align:center">
+                    <div style="font-size:0.8em;font-weight:700;margin-bottom:4px">${item.label}</div>
+                    <div style="font-size:1.5em;font-weight:900;color:${item.color}">${rate}%</div>
+                    <div style="font-size:0.72em;color:var(--text-muted);margin-top:2px">${item.right}정 / ${item.wrong}오</div>
+                </div>`;
+            }).join('')}
+        </div>
+        ${s.sureWrong >= 3 ? `<div style="background:var(--danger-light);border-radius:12px;padding:12px 14px;border-left:3px solid var(--danger)">
+            <div style="font-size:0.85em;font-weight:800;color:var(--danger);margin-bottom:4px">⚠️ 주의: 확신 오답 ${s.sureWrong}회</div>
+            <div style="font-size:0.78em;color:var(--text-sub)">확신했는데 틀린 문제들을 집중 복습하세요. 잘못된 개념 이해가 고착될 수 있습니다.</div>
+        </div>` : ''}
+        <div style="margin-top:12px;font-size:0.78em;color:var(--text-muted);text-align:center">총 ${total}문제 분석 완료</div>
+    `;
+}
+
 function renderHeatmap() {
     const grid=document.getElementById('heatmapGrid'); grid.innerHTML='';
     const days=35, today=new Date(), cells=[];
@@ -5816,7 +6239,7 @@ function renderStatList(elementId,statsObj) {
     if(list.innerHTML==='') list.innerHTML='<div style="text-align:center;padding:10px;color:var(--text-muted)">아직 푼 문제가 없습니다.</div>';
 }
 function switchDashTab(tab) {
-    ['tag','subject','field','heatmap'].forEach(t=>{
+    ['tag','subject','field','heatmap','metacog'].forEach(t=>{
         document.getElementById('dash-tab-'+t).classList.toggle('active',t===tab);
         const capT=t.charAt(0).toUpperCase()+t.slice(1);
         const el=document.getElementById('dashContent'+capT);
@@ -5824,6 +6247,7 @@ function switchDashTab(tab) {
     });
     if(tab==='heatmap') renderHeatmap();
     if(tab==='field') renderFieldStatsList();
+    if(tab==='metacog') renderMetacogDashboard();
 }
 
 /* ============================================================
@@ -5832,8 +6256,22 @@ function switchDashTab(tab) {
 // 로컬 저장만 (내부용)
 function saveDataLocal() { localStorage.setItem('quizData_v50',JSON.stringify(bank)); localStorage.setItem('userStats_v50',JSON.stringify(userStats)); }
 
-// 로컬 저장 + Firebase 자동 저장 트리거
-function saveData() { saveDataLocal(); fbTriggerAutoSave(); }
+// V160: 디바운스 배치 저장 — 연속 호출 시 마지막 호출만 실행 (성능 최적화)
+function saveData() {
+    if(saveDebounceTimer) clearTimeout(saveDebounceTimer);
+    saveDebounceTimer = setTimeout(() => {
+        saveDataLocal();
+        fbTriggerAutoSave();
+        saveDebounceTimer = null;
+    }, 300);
+}
+
+// 즉시 저장이 필요한 경우 (앱 종료 전 등)
+function saveDataImmediate() {
+    if(saveDebounceTimer) { clearTimeout(saveDebounceTimer); saveDebounceTimer = null; }
+    saveDataLocal();
+    fbTriggerAutoSave();
+}
 
 function updateStatsUI() {
     document.getElementById('userLevel').innerText='Lv.'+userStats.level;
@@ -6760,8 +7198,63 @@ function getMemStrength(q) {
 }
 
 function renderMemStrength(q) {
+    // V160: renderMemStrengthV160으로 위임 (기존 호출 호환성 유지)
+    if(typeof renderMemStrengthV160 === 'function') {
+        renderMemStrengthV160(q);
+        return;
+    }
+    // 폴백
     const lv = getMemStrength(q);
     const labels = ['새 문제', '불안정', '약한 기억', '보통', '강한 기억', '장기 기억'];
+    const dots = document.querySelectorAll('.mem-dot');
+    dots.forEach((dot, i) => {
+        dot.className = 'mem-dot';
+        if(i < lv) dot.classList.add('filled-' + lv);
+    });
+    const memLabel = document.getElementById('memLabel');
+    if(memLabel) { memLabel.className = 'mem-label-text lv' + lv; memLabel.innerText = labels[lv]; }
+    const badge = document.getElementById('interleaveBadge');
+    if(badge) badge.style.display = interleaveMode ? 'inline-block' : 'none';
+}
+
+/* ============================================================
+   V160 — 뇌과학 강화 신규 함수들
+============================================================ */
+
+/* 사전 확신도 설정 (답 고르기 전) */
+function setPreConf(level) {
+    preConfidence = level;
+    const wrap = document.getElementById('preConfWrap');
+    if(!wrap) return;
+    wrap.querySelectorAll('.pre-conf-btn').forEach(b => b.classList.remove('selected'));
+    const btn = wrap.querySelector('.pc-' + level);
+    if(btn) btn.classList.add('selected');
+    // 살짝 접기 (0.8초 후) — 방해 최소화
+    setTimeout(() => {
+        if(wrap) wrap.style.maxHeight = '0';
+        setTimeout(() => { if(wrap) { wrap.classList.remove('show'); wrap.style.maxHeight = ''; } }, 400);
+    }, 600);
+}
+
+/* 세션 진행바 업데이트 */
+function updateSessionProgressBar() {
+    const fill = document.getElementById('sessionProgressFill');
+    if(!fill) return;
+    const total = filteredIndices.length;
+    if(total === 0) { fill.style.width = '0%'; return; }
+    const answered = filteredIndices.filter(i => bank[i] && bank[i].my_status).length;
+    fill.style.width = Math.round(answered / total * 100) + '%';
+}
+
+/* V160: 메모리 강도 바 렌더링 (도트 → 부드러운 바) */
+function renderMemStrengthV160(q) {
+    if(!q) return;
+    const lv = getMemStrength(q);
+    const labels = ['새 문제', '불안정', '약한 기억', '보통', '강한 기억', '장기 기억'];
+    const colors = ['#AEAEB2', '#EF4444', '#F97316', '#F59E0B', '#10B981', '#3B82F6'];
+    const widths = [0, 20, 40, 60, 80, 100];
+
+    // 기존 도트 방식도 업데이트 (호환성)
     const dots = document.querySelectorAll('.mem-dot');
     dots.forEach((dot, i) => {
         dot.className = 'mem-dot';
@@ -6771,10 +7264,61 @@ function renderMemStrength(q) {
     if(memLabel) {
         memLabel.className = 'mem-label-text lv' + lv;
         memLabel.innerText = labels[lv];
+        // 색상 스타일 직접 적용
+        memLabel.style.color = colors[lv];
     }
-    // Interleaving badge
+
+    // 다음 복습일 표시
+    const nextReview = document.getElementById('memNextReview');
+    if(nextReview && q.sr_nextReview) {
+        const today = new Date().toISOString().slice(0,10);
+        const daysLeft = Math.ceil((new Date(q.sr_nextReview) - new Date(today)) / 86400000);
+        if(daysLeft <= 0) {
+            nextReview.innerHTML = '<span class="next-review-chip urgent">📅 복습 필요!</span>';
+        } else if(daysLeft <= 3) {
+            nextReview.innerHTML = `<span class="next-review-chip soon">📅 ${daysLeft}일 후</span>`;
+        } else {
+            nextReview.innerHTML = `<span class="next-review-chip">📅 ${daysLeft}일 후</span>`;
+        }
+        nextReview.style.display = 'inline';
+    } else if(nextReview) {
+        nextReview.style.display = 'none';
+    }
+
+    // 인터리빙 뱃지
     const badge = document.getElementById('interleaveBadge');
     if(badge) badge.style.display = interleaveMode ? 'inline-block' : 'none';
+}
+
+/* V160: 망각곡선 기반 긴급 문제 정렬 (에빙하우스) */
+function sortByForgettingCurve(indices) {
+    return [...indices].sort((a, b) => {
+        const qa = bank[a], qb = bank[b];
+        const scoreA = getForgettingUrgency(qa);
+        const scoreB = getForgettingUrgency(qb);
+        return scoreB - scoreA; // 긴급도 높은 순
+    });
+}
+function getForgettingUrgency(q) {
+    if(!q) return 0;
+    if(!q._lastWrongTime) return q.wrong_count > 0 ? 50 : 10;
+    const daysSince = (Date.now() - q._lastWrongTime) / 86400000;
+    // 에빙하우스: 1~7일이 가장 복습 효과 높음
+    if(daysSince < 0.5) return 30;  // 방금 틀림 (아직 기다려야)
+    if(daysSince < 3)   return 100; // 1~3일 — 최고 우선순위
+    if(daysSince < 7)   return 80;  // 3~7일 — 높음
+    if(daysSince < 14)  return 60;  // 1~2주
+    return 40; // 오래된 오답
+}
+
+/* V160: 메타인지 정확도 분석 */
+function getMetacogAccuracy() {
+    const s = metacogStats;
+    const total = Object.values(s).reduce((a,b) => a+b, 0);
+    if(total === 0) return null;
+    const sureCorrectRate = s.sureRight / ((s.sureRight + s.sureWrong) || 1);
+    const dangerCount = s.sureWrong; // 확신했는데 틀린 횟수
+    return { sureCorrectRate: Math.round(sureCorrectRate * 100), dangerCount, total };
 }
 
 /* ============================================================
@@ -6852,7 +7396,49 @@ function handleInterleaveToggle() {
     interleaveMode = document.getElementById('interleaveToggle').checked;
     localStorage.setItem('interleaveMode_v80', interleaveMode);
     applyFilter(); updateUI();
-    showToast(interleaveMode ? '🔀 인터리빙 모드 ON — 과목이 혼합됩니다' : '🔀 인터리빙 모드 OFF');
+    if(interleaveMode) {
+        showToast('🔀 인터리빙 ON — 과목이 혼합되며 기억 정착률이 높아집니다');
+    } else {
+        showToast('🔀 인터리빙 OFF');
+    }
+}
+
+/* V160: 인터리빙 셔플 — 같은 과목 연속 3개 이상 방지 알고리즘 */
+function applyInterleaveShuffle(indices) {
+    if(indices.length <= 3) return [...indices];
+    // 과목별 버킷 생성
+    const buckets = {};
+    indices.forEach(i => {
+        const subj = (bank[i] && bank[i].subject) || '기타';
+        if(!buckets[subj]) buckets[subj] = [];
+        buckets[subj].push(i);
+    });
+    const subjects = Object.keys(buckets);
+    if(subjects.length <= 1) return [...indices]; // 과목 1개면 인터리빙 불필요
+    // 각 버킷 섞기
+    subjects.forEach(s => buckets[s].sort(() => Math.random() - 0.5));
+    // 라운드로빈 방식으로 혼합
+    const result = [];
+    const lastTwo = [];
+    while(result.length < indices.length) {
+        let placed = false;
+        for(const subj of subjects.sort(() => Math.random() - 0.5)) {
+            if(buckets[subj].length === 0) continue;
+            if(lastTwo.length >= 2 && lastTwo[lastTwo.length-1] === subj && lastTwo[lastTwo.length-2] === subj) continue;
+            result.push(buckets[subj].shift());
+            lastTwo.push(subj);
+            if(lastTwo.length > 2) lastTwo.shift();
+            placed = true;
+            break;
+        }
+        if(!placed) {
+            // 남은 것 그냥 추가
+            for(const subj of subjects) {
+                if(buckets[subj].length > 0) { result.push(buckets[subj].shift()); break; }
+            }
+        }
+    }
+    return result;
 }
 
 /* ============================================================
