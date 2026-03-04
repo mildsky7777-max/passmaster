@@ -8,7 +8,12 @@
     <meta name="apple-mobile-web-app-title" content="합격마스터">
     <meta name="format-detection" content="telephone=no">
     <meta name="theme-color" content="#4F46E5">
-    <title>합격마스터 (Ver.161)</title>
+    <title>합격마스터 (Ver.162)</title>
+
+<!-- KaTeX 수식 렌더링 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
 <!-- Firebase SDK: body 끝에서 로드 -->
 <style>
@@ -4215,6 +4220,42 @@ let renderPending = false;        // 성능: 불필요 재렌더 방지 플래�
 let metacogStats = JSON.parse(localStorage.getItem('metacogStats_v160') || '{"sureRight":0,"sureWrong":0,"unsureRight":0,"unsureWrong":0,"guessRight":0,"guessWrong":0}');
 
 /* ============================================================
+   KaTeX 수식 렌더링
+============================================================ */
+function renderMath(element) {
+    if (typeof renderMathInElement !== 'undefined' && element) {
+        try {
+            renderMathInElement(element, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\[', right: '\\]', display: true},
+                    {left: '\\(', right: '\\)', display: false}
+                ],
+                throwOnError: false,
+                errorColor: '#cc0000'
+            });
+        } catch(e) {
+            console.warn('KaTeX 렌더링 오류:', e);
+        }
+    }
+}
+
+function renderAllMath() {
+    // 퀴즈 모드
+    renderMath(document.getElementById('quizQuestion'));
+    renderMath(document.getElementById('quizOptionsList'));
+    renderMath(document.getElementById('quizOriginalExp'));
+    renderMath(document.getElementById('quizTipText'));
+    renderMath(document.getElementById('quizAnsText'));
+    // 카드 모드
+    renderMath(document.getElementById('cardQ'));
+    renderMath(document.getElementById('cardA'));
+    renderMath(document.getElementById('cardTip'));
+    renderMath(document.getElementById('cardOriginalExp'));
+}
+
+/* ============================================================
    INIT
 ============================================================ */
 window.onload = function() {
@@ -4768,6 +4809,9 @@ function updateUI() {
 
     /* ── V160: 메모리 강도 바 업데이트 ── */
     renderMemStrengthV160(q);
+
+    /* ── V162: KaTeX 수식 렌더링 ── */
+    renderAllMath();
 }
 
 /* ============================================================
@@ -5950,6 +5994,8 @@ function renderArchiveList() {
             ${a.original_explanation?`<div style="margin-top:8px;font-size:0.79em;color:var(--text-sub);background:var(--bg);border-radius:8px;padding:8px;line-height:1.5;max-height:80px;overflow:hidden;-webkit-overflow-scrolling:touch;overflow-y:auto">${escapeHtml(a.original_explanation)}</div>`:''}
         </div>`;
     }).join('');
+    // V162: 오답노트 수식 렌더링
+    renderMath(container);
 }
 function deleteArchiveItem(id) { showConfirm('🗑 오답 기록 삭제\n이 항목을 아카이브에서 삭제합니다.',()=>{ wrongArchive=wrongArchive.filter(a=>String(a.id)!==String(id)); saveArchive(); renderArchiveList(); showToast('삭제되었습니다.'); },null,true); }
 function clearAllArchive() { if(wrongArchive.length===0){showToast('아카이브가 비어 있습니다.');return;} showConfirm('🗑 오답 아카이브 전체 삭제\n'+wrongArchive.length+'개의 오답 기록을 모두 삭제합니다.\n이 작업은 되돌릴 수 없습니다!',()=>{ wrongArchive=[]; saveArchive(); renderArchiveList(); showToast('오답 아카이브가 초기화되었습니다.'); },null,true); }
@@ -6000,6 +6046,9 @@ function renderArchiveQuiz() {
     document.getElementById('aqCheckBtn').style.display=(a.options&&a.options.length>0)?'block':'none';
     document.getElementById('aqNextBtn').innerText=(aqIdx===total-1)?'완료 ✓':'다음 ▶';
     document.getElementById('aqBody').scrollTop=0;
+    // V162: 아카이브 퀴즈 수식 렌더링
+    renderMath(document.getElementById('aqQuestion'));
+    renderMath(document.getElementById('aqOptions'));
 }
 function submitArchiveAnswer() {
     if(aqAnswered){archiveQuizNav(1);return;}
@@ -6022,6 +6071,8 @@ function submitArchiveAnswer() {
     rt.className='aq-result-title '+(isCorrect?'correct':'wrong');
     rt.innerText=isCorrect?'✅ 정답입니다!':'❌ 오답 — 정답: '+a.answer;
     re.innerText=(a.ai_tip||a.original_explanation||'해설 정보가 없습니다.');
+    // V162: 해설 수식 렌더링
+    renderMath(re);
     const ckBtn=document.getElementById('aqCheckBtn');
     ckBtn.innerText=aqIdx===aqList.length-1?'결과 보기 ✓':'다음 문제 ▶';
     setTimeout(()=>{ try{rb.scrollIntoView({behavior:'smooth',block:'nearest'});}catch(e){} },100);
