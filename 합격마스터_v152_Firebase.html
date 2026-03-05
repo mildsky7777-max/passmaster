@@ -3917,6 +3917,8 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                 <label style="font-size:0.85em;font-weight:700;color:var(--text-sub);display:block;margin-bottom:6px">📚 분야 선택</label>
                 <div id="mockFieldSelect" style="display:flex;gap:8px;flex-wrap:wrap"></div>
             </div>
+            <!-- 문제집 통계 카드 -->
+            <div id="mockFieldStats" style="display:none;margin-bottom:14px;background:var(--bg);border-radius:12px;padding:12px 14px;border:1.5px solid var(--border)"></div>
             <!-- 과목별 문제 수 지정 -->
             <div style="margin-bottom:14px" id="mockSubjectQuotaWrap">
                 <!-- 총 문제 수 입력 -->
@@ -8080,6 +8082,52 @@ function setMockField(btn,field){
     document.querySelectorAll('#mockFieldSelect .mock-cnt-btn').forEach(x=>x.classList.remove('active'));
     btn.classList.add('active'); mockSelectedField=field;
     renderMockSubjectQuota();
+    renderMockFieldStats();
+}
+
+function renderMockFieldStats() {
+    const el = document.getElementById('mockFieldStats');
+    if(!el) return;
+    // 전체 선택 시 숨김
+    if(mockSelectedField === 'all') { el.style.display='none'; return; }
+
+    const pool = bank.filter(q => mockFieldMatch(q));
+    if(pool.length === 0) { el.style.display='none'; return; }
+
+    const total = pool.length;
+    const solved = pool.filter(q => q.my_status === 'correct' || q.my_status === 'wrong' || q.my_ans).length;
+    const wrong = pool.filter(q => q.my_status === 'wrong').length;
+    const bookmarked = pool.filter(q => q.bookmark).length;
+    const remaining = total - solved;
+    const acc = solved > 0 ? Math.round(pool.filter(q => q.my_status === 'correct').length / solved * 100) : null;
+
+    el.style.display = 'block';
+    el.innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+            <div style="background:var(--surface);border-radius:10px;padding:10px;text-align:center;border:1px solid var(--border)">
+                <div style="font-size:1.4em;font-weight:900;color:var(--primary)">${total}</div>
+                <div style="font-size:0.75em;color:var(--text-muted);margin-top:2px">총 문제</div>
+            </div>
+            <div style="background:var(--surface);border-radius:10px;padding:10px;text-align:center;border:1px solid var(--border);cursor:pointer" onclick="document.getElementById('mockWrongOnly').checked=false;document.getElementById('mockBookmarkOnly').checked=false;startMockExam()">
+                <div style="font-size:1.4em;font-weight:900;color:var(--success)">${solved}</div>
+                <div style="font-size:0.75em;color:var(--text-muted);margin-top:2px">풀었음 ▶</div>
+            </div>
+            <div style="background:var(--surface);border-radius:10px;padding:10px;text-align:center;border:1px solid var(--border);cursor:pointer" onclick="document.getElementById('mockWrongOnly').checked=true;document.getElementById('mockBookmarkOnly').checked=false;startMockExam()">
+                <div style="font-size:1.4em;font-weight:900;color:var(--danger)">${wrong}</div>
+                <div style="font-size:0.75em;color:var(--text-muted);margin-top:2px">오답 ▶</div>
+            </div>
+            <div style="background:var(--surface);border-radius:10px;padding:10px;text-align:center;border:1px solid var(--border);cursor:pointer" onclick="document.getElementById('mockBookmarkOnly').checked=true;document.getElementById('mockWrongOnly').checked=false;startMockExam()">
+                <div style="font-size:1.4em;font-weight:900;color:#F59E0B">${bookmarked}</div>
+                <div style="font-size:0.75em;color:var(--text-muted);margin-top:2px">⭐ 북마크 ▶</div>
+            </div>
+        </div>
+        <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;font-size:0.82em">
+            <span style="color:var(--text-sub)">남은 문제: <b style="color:var(--warning)">${remaining}문제</b></span>
+            ${acc!==null ? `<span style="color:var(--text-sub)">정답률: <b style="color:${acc>=80?'var(--success)':acc>=60?'var(--warning)':'var(--danger)'}">${acc}%</b></span>` : '<span style="color:var(--text-muted)">아직 풀지 않음</span>'}
+        </div>
+        <div style="margin-top:6px;height:5px;border-radius:4px;background:var(--border);overflow:hidden">
+            <div style="height:100%;width:${total>0?Math.round(solved/total*100):0}%;background:linear-gradient(90deg,var(--primary),#7C3AED);border-radius:4px;transition:width 0.3s"></div>
+        </div>`;
 }
 
 function renderMockSubjectQuota() {
@@ -8188,7 +8236,6 @@ function applyMockTotalDistribute() {
         subjects.forEach(s => {
             const max = bank.filter(q => {
                 if(!mockFieldMatch(q)) return false;
-                if(activeTags.size>0 && !activeTags.has(q.tag||'기타')) return false;
                 return (q.subject||'미분류') === s;
             }).length;
             mockSubjectQuota[s] = max;
@@ -8199,7 +8246,6 @@ function applyMockTotalDistribute() {
         subjects.forEach(s => {
             subjectMaxes[s] = bank.filter(q => {
                 if(!mockFieldMatch(q)) return false;
-                if(activeTags.size>0 && !activeTags.has(q.tag||'기타')) return false;
                 return (q.subject||'미분류') === s;
             }).length;
         });
@@ -8245,7 +8291,6 @@ function startMockExam() {
             if(count<=0) return;
             let subPool=bank.filter(q=>{
                 if(!mockFieldMatch(q)) return false;
-                if(activeTags.size>0 && !activeTags.has(q.tag||'기타')) return false;
                 if((q.subject||'미분류')!==subject) return false;
                 if(wrongOnly && q.my_status!=='wrong' && q.my_status) return false;
                 if(bookmarkOnly && !q.bookmark) return false;
@@ -8261,8 +8306,6 @@ function startMockExam() {
         // 기존 전체 셔플 모드
         pool=bank.filter(q=>{
             if(!mockFieldMatch(q)) return false;
-            if(activeTags.size>0 && !activeTags.has(q.tag||'기타')) return false;
-            if(activeSubjects.size>0 && !activeSubjects.has(q.subject||'미분류(공통)')) return false;
             if(wrongOnly && q.my_status!=='wrong' && q.my_status) return false;
             return true;
         });
