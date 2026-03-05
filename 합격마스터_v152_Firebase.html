@@ -4048,7 +4048,7 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
                 <h3 style="margin:0;font-size:1.05em">📚 오답 아카이브</h3>
                 <div style="display:flex;gap:8px">
-                    <button onclick="startArchivePractice()" style="background:linear-gradient(135deg,#7C3AED,#DC2626);color:white;border:none;border-radius:10px;padding:7px 12px;font-size:0.8em;font-weight:700;cursor:pointer">🎯 풀기</button>
+                    <button onclick="startArchivePractice()" id="archivePracticeBtn" style="background:linear-gradient(135deg,#7C3AED,#DC2626);color:white;border:none;border-radius:10px;padding:7px 12px;font-size:0.8em;font-weight:700;cursor:pointer">🎯 필터 문제 풀기</button>
                     <button class="modal-close" onclick="closeArchiveModal()">닫기</button>
                 </div>
             </div>
@@ -4064,6 +4064,24 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                 <button onclick="setArchiveDateFilter('week')"  id="adf-week"  class="adf-chip">이번 주</button>
                 <button onclick="setArchiveDateFilter('month')" id="adf-month" class="adf-chip">이번 달</button>
             </div>
+            <!-- 출처 필터 -->
+            <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+                <span style="font-size:0.75em;font-weight:700;color:var(--text-muted);align-self:center">출처</span>
+                <button onclick="setArchiveSourceFilter('all')" id="asf-all" class="adf-chip adf-active">전체</button>
+                <button onclick="setArchiveSourceFilter('mock')" id="asf-mock" class="adf-chip">🎯 모의고사</button>
+                <button onclick="setArchiveSourceFilter('normal')" id="asf-normal" class="adf-chip">📖 일반학습</button>
+            </div>
+            <!-- 오답 횟수 필터 -->
+            <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+                <span style="font-size:0.75em;font-weight:700;color:var(--text-muted);align-self:center">횟수</span>
+                <button onclick="setArchiveCountFilter('all')" id="acf-all" class="adf-chip adf-active">전체</button>
+                <button onclick="setArchiveCountFilter('1')" id="acf-1" class="adf-chip">1회</button>
+                <button onclick="setArchiveCountFilter('2')" id="acf-2" class="adf-chip">2회</button>
+                <button onclick="setArchiveCountFilter('3+')" id="acf-3" class="adf-chip">3회+</button>
+            </div>
+            <!-- 문제집/과목 동적 필터 -->
+            <div id="archiveTagFilterRow" style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap"></div>
+            <div id="archiveSubjectFilterRow" style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap"></div>
             <input class="archive-search" id="archiveSearch" placeholder="🔍 문제 / 과목 / 문제집 검색" oninput="renderArchiveList()">
             <div style="display:flex;justify-content:space-between;align-items:center">
                 <select id="archiveSortSelect" onchange="renderArchiveList()" style="padding:7px 10px;border-radius:10px;border:1.5px solid var(--border);font-size:0.83em;background:var(--bg);outline:none;color:var(--text)">
@@ -5909,12 +5927,36 @@ function addToArchive(q) {
     saveArchive();
 }
 function saveArchive() { localStorage.setItem('wrongArchive_v50',JSON.stringify(wrongArchive)); }
-function openArchiveModal() { archiveFieldFilter='all'; archiveDateFilter='all'; document.querySelectorAll('.adf-chip').forEach(c=>c.classList.remove('adf-active')); const allChip=document.getElementById('adf-all'); if(allChip) allChip.classList.add('adf-active'); document.getElementById('archiveSearch').value=''; document.getElementById('archiveSortSelect').value='date_desc'; document.getElementById('resetModal').style.display='none'; renderArchiveInsight(); renderArchiveList(); document.getElementById('archiveModal').style.display='flex'; }
+function openArchiveModal() { archiveFieldFilter='all'; archiveDateFilter='all'; archiveTagFilter='all'; archiveSubjectFilter='all'; archiveCountFilter='all'; archiveSourceFilter='all'; document.querySelectorAll('.adf-chip').forEach(c=>c.classList.remove('adf-active')); const allChip=document.getElementById('adf-all'); if(allChip) allChip.classList.add('adf-active'); document.getElementById('archiveSearch').value=''; document.getElementById('archiveSortSelect').value='date_desc'; document.getElementById('resetModal').style.display='none'; renderArchiveInsight(); renderArchiveList(); document.getElementById('archiveModal').style.display='flex'; }
 function closeArchiveModal() { document.getElementById('archiveModal').style.display='none'; }
 
 let archiveFieldFilter = 'all';
 let archiveDateFilter = 'all'; // 'all' | 'today' | 'week' | 'month'
 
+let archiveTagFilter = 'all';
+let archiveSubjectFilter = 'all';
+let archiveCountFilter = 'all';
+let archiveSourceFilter = 'all';
+function setArchiveSourceFilter(f) {
+    archiveSourceFilter = f;
+    document.querySelectorAll('[id^="asf-"]').forEach(b => b.classList.remove('adf-active'));
+    const el = document.getElementById('asf-' + f); if(el) el.classList.add('adf-active');
+    renderArchiveList();
+}
+function setArchiveCountFilter(f) {
+    archiveCountFilter = f;
+    document.querySelectorAll('[id^="acf-"]').forEach(b => b.classList.remove('adf-active'));
+    const el = document.getElementById('acf-' + f); if(el) el.classList.add('adf-active');
+    renderArchiveList();
+}
+function setArchiveTagFilter(f) {
+    archiveTagFilter = f; archiveSubjectFilter = 'all';
+    renderArchiveList();
+}
+function setArchiveSubjectFilter(f) {
+    archiveSubjectFilter = f;
+    renderArchiveList();
+}
 function setArchiveDateFilter(f) {
     archiveDateFilter = f;
     document.querySelectorAll('.adf-chip').forEach(c => c.classList.remove('adf-active'));
@@ -5997,16 +6039,37 @@ function renderArchiveList() {
         } else { tabsEl.innerHTML=''; }
     }
 
-    const dateFilterFn = getDateFilterFn();
-    let list=wrongArchive.filter(a=>{
-        if(!dateFilterFn(a)) return false;
-        if(keyword && !(a.question+a.tag+a.subject+a.answer).toLowerCase().includes(keyword)) return false;
-        if(archiveFieldFilter!=='all'){
-            const af=fieldMap[a.tag]||getAutoField(a.tag);
-            if(af!==archiveFieldFilter) return false;
-        }
-        return true;
-    });
+    // 문제집 필터 버튼 동적 렌더
+    const tagRow = document.getElementById('archiveTagFilterRow');
+    if(tagRow) {
+        const usedTags = [...new Set(wrongArchive.map(a => a.tag||'기타'))].sort();
+        if(usedTags.length > 1) {
+            let html = '<span style="font-size:0.75em;font-weight:700;color:var(--text-muted);align-self:center">문제집</span>';
+            html += `<button onclick="setArchiveTagFilter('all')" class="adf-chip ${archiveTagFilter==='all'?'adf-active':''}">전체</button>`;
+            usedTags.forEach(t => {
+                html += `<button onclick="setArchiveTagFilter('${t.replace(/'/g,"\'")}')" class="adf-chip ${archiveTagFilter===t?'adf-active':''}" style="${archiveTagFilter===t?'background:var(--primary);color:#fff;border-color:var(--primary)':''}">${t}</button>`;
+            });
+            tagRow.innerHTML = html;
+            tagRow.style.display = 'flex';
+        } else { tagRow.innerHTML = ''; tagRow.style.display = 'none'; }
+    }
+    // 과목 필터 버튼 동적 렌더 (선택된 문제집 기준)
+    const subjectRow = document.getElementById('archiveSubjectFilterRow');
+    if(subjectRow) {
+        const srcForSubject = archiveTagFilter==='all' ? wrongArchive : wrongArchive.filter(a=>(a.tag||'기타')===archiveTagFilter);
+        const usedSubjects = [...new Set(srcForSubject.map(a => a.subject||'미분류'))].sort();
+        if(usedSubjects.length > 1) {
+            let html = '<span style="font-size:0.75em;font-weight:700;color:var(--text-muted);align-self:center">과목</span>';
+            html += `<button onclick="setArchiveSubjectFilter('all')" class="adf-chip ${archiveSubjectFilter==='all'?'adf-active':''}">전체</button>`;
+            usedSubjects.forEach(s => {
+                html += `<button onclick="setArchiveSubjectFilter('${s.replace(/'/g,"\'")}')" class="adf-chip ${archiveSubjectFilter===s?'adf-active':''}" style="${archiveSubjectFilter===s?'background:var(--primary);color:#fff;border-color:var(--primary)':''}">${s}</button>`;
+            });
+            subjectRow.innerHTML = html;
+            subjectRow.style.display = 'flex';
+        } else { subjectRow.innerHTML = ''; subjectRow.style.display = 'none'; }
+    }
+
+    let list = getFilteredArchiveList();
     if(sort==='date_desc') list=list.slice().sort((a,b)=>(b.lastDate||'').localeCompare(a.lastDate||''));
     else if(sort==='count_desc') list=list.slice().sort((a,b)=>(b.wrongCount||1)-(a.wrongCount||1));
     else if(sort==='tag') list=list.slice().sort((a,b)=>(a.tag||'').localeCompare(b.tag||''));
@@ -6018,6 +6081,9 @@ function renderArchiveList() {
     statsBar.innerHTML=`<div class="archive-stat"><div class="archive-stat-num">${wrongArchive.length}</div><div class="archive-stat-label">총 오답</div></div><div class="archive-stat"><div class="archive-stat-num">${totalWrongs}</div><div class="archive-stat-label">누적 횟수</div></div><div class="archive-stat"><div class="archive-stat-num">${tagCount}</div><div class="archive-stat-label">문제집 수</div></div>${fieldCount>0?`<div class="archive-stat"><div class="archive-stat-num">${fieldCount}</div><div class="archive-stat-label">분야 수</div></div>`:''}`;
 
     const container=document.getElementById('archiveList');
+    // 필터 문제 풀기 버튼에 개수 표시
+    const practiceBtn = document.getElementById('archivePracticeBtn');
+    if(practiceBtn) practiceBtn.innerText = list.length > 0 ? `🎯 필터 문제 풀기 (${list.length})` : '🎯 필터 문제 풀기';
     if(list.length===0){ container.innerHTML='<div style="text-align:center;padding:30px;color:var(--text-muted)">'+(wrongArchive.length===0?'📭 아직 기록된 오답이 없습니다.<br><small>문제를 풀다 틀리면 자동으로 여기에 기록됩니다.</small>':'검색 결과가 없습니다.')+'</div>'; return; }
     container.innerHTML=list.map(a=>{
         const practiceAcc=a.practice_total>0?Math.round(a.practice_correct/a.practice_total*100):null;
@@ -6046,11 +6112,28 @@ function escapeHtml(str){ if(!str) return ''; return String(str).replace(/&/g,'&
 ============================================================ */
 let aqList=[],aqIdx=0,aqAnswered=false,aqCorrect=0,aqWrong=0;
 
+function getFilteredArchiveList() {
+    const keyword=(document.getElementById('archiveSearch').value||'').toLowerCase();
+    const dateFilterFn = getDateFilterFn();
+    return wrongArchive.filter(a => {
+        if(!dateFilterFn(a)) return false;
+        if(keyword && !(a.question+a.tag+a.subject+a.answer).toLowerCase().includes(keyword)) return false;
+        if(archiveFieldFilter!=='all'){ const af=fieldMap[a.tag]||getAutoField(a.tag); if(af!==archiveFieldFilter) return false; }
+        if(archiveTagFilter!=='all' && (a.tag||'기타')!==archiveTagFilter) return false;
+        if(archiveSubjectFilter!=='all' && (a.subject||'미분류')!==archiveSubjectFilter) return false;
+        if(archiveCountFilter==='1' && (a.wrongCount||1)!==1) return false;
+        if(archiveCountFilter==='2' && (a.wrongCount||1)!==2) return false;
+        if(archiveCountFilter==='3+' && (a.wrongCount||1)<3) return false;
+        if(archiveSourceFilter==='mock' && !a.fromMock) return false;
+        if(archiveSourceFilter==='normal' && a.fromMock) return false;
+        return true;
+    });
+}
+
 function startArchivePractice() {
     if(wrongArchive.length===0){showToast('아직 아카이브에 오답이 없습니다.','success');return;}
-    const keyword=(document.getElementById('archiveSearch').value||'').toLowerCase();
-    let list=keyword?wrongArchive.filter(a=>(a.question+a.tag+a.subject+a.answer).toLowerCase().includes(keyword)):wrongArchive.slice();
-    if(list.length===0){showToast('검색 조건에 맞는 문제가 없습니다.');return;}
+    let list = getFilteredArchiveList();
+    if(list.length===0){showToast('필터 조건에 맞는 문제가 없습니다.');return;}
     for(let i=list.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[list[i],list[j]]=[list[j],list[i]];}
     aqList=list; aqIdx=0; aqCorrect=0; aqWrong=0; aqAnswered=false;
     document.getElementById('archiveModal').style.display='none';
@@ -8682,7 +8765,7 @@ function showMockResult(){
     // ── 오답 아카이브 연동 ──
     mockQuestions.forEach(q=>{
         if(q._mockResult==='wrong') {
-            addToArchive({ ...q, my_ans: q._mockMyAns, my_status: 'wrong' });
+            addToArchive({ ...q, my_ans: q._mockMyAns, my_status: 'wrong', fromMock: true });
         }
     });
     saveArchive();
