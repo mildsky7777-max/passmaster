@@ -4043,7 +4043,7 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
 </div>
 
 <div id="archiveModal" class="modal-overlay" onclick="if(event.target===this)closeArchiveModal()">
-    <div class="modal-box" style="padding:0;overflow:hidden;max-width:520px;max-height:92vh;display:flex;flex-direction:column">
+    <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:1000;display:flex;flex-direction:column;overflow:hidden">
         <div style="padding:18px 18px 12px;flex-shrink:0;border-bottom:1px solid var(--border)">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
                 <h3 style="margin:0;font-size:1.05em">📚 오답 아카이브</h3>
@@ -4101,7 +4101,7 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
 
 <!-- Archive quiz modal -->
 <div id="archiveQuizModal" class="modal-overlay" onclick="if(event.target===this)closeArchiveQuiz()">
-    <div class="modal-box" style="padding:0;overflow:hidden;max-width:520px;max-height:92vh;display:flex;flex-direction:column">
+    <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:1000;display:flex;flex-direction:column;overflow:hidden">
         <div class="aq-header" id="aqHeader">
             <div class="aq-header-top">
                 <span class="aq-title" id="aqTitle">📚 아카이브 풀기</span>
