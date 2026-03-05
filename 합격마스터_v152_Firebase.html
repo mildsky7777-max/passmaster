@@ -3958,22 +3958,12 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
             </div>
             <div style="margin-bottom:8px">
                 <label style="display:flex;align-items:center;gap:8px;font-size:0.9em;font-weight:600;cursor:pointer">
-                    <input type="checkbox" id="mockWrongOnly" style="width:16px;height:16px"> ❌ 오답 문제만 출제 <span style="font-size:0.78em;color:var(--text-muted);font-weight:400">(일반학습 기준)</span>
+                    <input type="checkbox" id="mockMockWrongOnly" style="width:16px;height:16px"> ❌ 오답만 출제
                 </label>
             </div>
             <div style="margin-bottom:8px">
                 <label style="display:flex;align-items:center;gap:8px;font-size:0.9em;font-weight:600;cursor:pointer">
-                    <input type="checkbox" id="mockUnansweredOnly" style="width:16px;height:16px"> ✏️ 미풀이 문제만 출제 <span style="font-size:0.78em;color:var(--text-muted);font-weight:400">(일반학습 기준)</span>
-                </label>
-            </div>
-            <div style="margin-bottom:8px">
-                <label style="display:flex;align-items:center;gap:8px;font-size:0.9em;font-weight:600;cursor:pointer">
-                    <input type="checkbox" id="mockMockWrongOnly" style="width:16px;height:16px"> 🎯 모의고사 오답만 출제 <span style="font-size:0.78em;color:var(--text-muted);font-weight:400">(모의고사 기록 기준)</span>
-                </label>
-            </div>
-            <div style="margin-bottom:8px">
-                <label style="display:flex;align-items:center;gap:8px;font-size:0.9em;font-weight:600;cursor:pointer">
-                    <input type="checkbox" id="mockMockUnansweredOnly" style="width:16px;height:16px"> 📝 모의고사 미풀이만 출제 <span style="font-size:0.78em;color:var(--text-muted);font-weight:400">(모의고사 기록 기준)</span>
+                    <input type="checkbox" id="mockMockUnansweredOnly" style="width:16px;height:16px"> ✏️ 미풀이만 출제
                 </label>
             </div>
             <div style="margin-bottom:12px">
@@ -8126,36 +8116,14 @@ function renderMockFieldStats() {
     if(pool.length === 0) { el.style.display='none'; return; }
 
     const total = pool.length;
-    // 일반학습 기준
-    const solved = pool.filter(q => q.my_status).length;
-    const wrong = pool.filter(q => q.my_status === 'wrong').length;
-    const unanswered = total - solved;
-    // 모의고사 기준
     const mockSolved = pool.filter(q => q.mock_status).length;
     const mockWrong = pool.filter(q => q.mock_status === 'wrong').length;
     const mockUnanswered = total - mockSolved;
     const bookmarked = pool.filter(q => q.bookmark).length;
-    const acc = solved > 0 ? Math.round(pool.filter(q => q.my_status === 'correct').length / solved * 100) : null;
     const mockAcc = mockSolved > 0 ? Math.round(pool.filter(q => q.mock_status === 'correct').length / mockSolved * 100) : null;
 
     el.style.display = 'block';
     el.innerHTML = `
-        <div style="font-size:0.78em;font-weight:700;color:var(--text-muted);margin-bottom:6px">📊 일반학습 기준</div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
-            <div style="background:var(--surface);border-radius:10px;padding:8px;text-align:center;border:1px solid var(--border)">
-                <div style="font-size:1.3em;font-weight:900;color:var(--primary)">${total}</div>
-                <div style="font-size:0.7em;color:var(--text-muted);margin-top:1px">총 문제</div>
-            </div>
-            <div style="background:var(--surface);border-radius:10px;padding:8px;text-align:center;border:1px solid var(--border);cursor:pointer" onclick="clearMockFilterOptions();document.getElementById('mockWrongOnly').checked=true;startMockExam()">
-                <div style="font-size:1.3em;font-weight:900;color:var(--danger)">${wrong}</div>
-                <div style="font-size:0.7em;color:var(--text-muted);margin-top:1px">❌ 오답 ▶</div>
-            </div>
-            <div style="background:var(--surface);border-radius:10px;padding:8px;text-align:center;border:1px solid var(--border);cursor:pointer" onclick="clearMockFilterOptions();document.getElementById('mockUnansweredOnly').checked=true;startMockExam()">
-                <div style="font-size:1.3em;font-weight:900;color:var(--warning)">${unanswered}</div>
-                <div style="font-size:0.7em;color:var(--text-muted);margin-top:1px">✏️ 미풀이 ▶</div>
-            </div>
-        </div>
-        <div style="font-size:0.78em;font-weight:700;color:var(--text-muted);margin-bottom:6px">🎯 모의고사 기준</div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
             <div style="background:var(--surface);border-radius:10px;padding:8px;text-align:center;border:1px solid var(--border)">
                 <div style="font-size:1.3em;font-weight:900;color:var(--primary)">${total}</div>
@@ -8172,7 +8140,7 @@ function renderMockFieldStats() {
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.8em;margin-bottom:6px">
             <span>⭐ 북마크: <b style="color:#F59E0B;cursor:pointer" onclick="clearMockFilterOptions();document.getElementById('mockBookmarkOnly').checked=true;startMockExam()">${bookmarked}문제 ▶</b></span>
-            ${mockAcc!==null?`<span>모의고사 정답률: <b style="color:${mockAcc>=80?'var(--success)':mockAcc>=60?'var(--warning)':'var(--danger)'}">${mockAcc}%</b></span>`:`<span style="color:var(--text-muted)">모의고사 기록 없음</span>`}
+            ${mockAcc!==null?`<span>정답률: <b style="color:${mockAcc>=80?'var(--success)':mockAcc>=60?'var(--warning)':'var(--danger)'}">${mockAcc}%</b></span>`:`<span style="color:var(--text-muted)">아직 기록 없음</span>`}
         </div>
         <div style="height:5px;border-radius:4px;background:var(--border);overflow:hidden">
             <div style="height:100%;width:${total>0?Math.round(mockSolved/total*100):0}%;background:linear-gradient(90deg,var(--primary),#7C3AED);border-radius:4px;transition:width 0.3s"></div>
@@ -8326,8 +8294,6 @@ function applyMockTotalDistribute() {
 }
 
 function startMockExam() {
-    const wrongOnly=document.getElementById('mockWrongOnly').checked;
-    const unansweredOnly=document.getElementById('mockUnansweredOnly')?.checked||false;
     const mockWrongOnly=document.getElementById('mockMockWrongOnly')?.checked||false;
     const mockUnansweredOnly=document.getElementById('mockMockUnansweredOnly')?.checked||false;
     const bookmarkOnly=document.getElementById('mockBookmarkOnly')?.checked||false;
@@ -8344,8 +8310,6 @@ function startMockExam() {
             let subPool=bank.filter(q=>{
                 if(!mockFieldMatch(q)) return false;
                 if((q.subject||'미분류')!==subject) return false;
-                if(wrongOnly && q.my_status!=='wrong') return false;
-                if(unansweredOnly && q.my_status) return false;
                 if(mockWrongOnly && q.mock_status!=='wrong') return false;
                 if(mockUnansweredOnly && q.mock_status) return false;
                 if(bookmarkOnly && !q.bookmark) return false;
@@ -8361,10 +8325,6 @@ function startMockExam() {
         // 기존 전체 셔플 모드
         pool=bank.filter(q=>{
             if(!mockFieldMatch(q)) return false;
-            // 일반학습 기준 필터
-            if(wrongOnly && q.my_status!=='wrong') return false;
-            if(unansweredOnly && q.my_status) return false;
-            // 모의고사 기준 필터
             if(mockWrongOnly && q.mock_status!=='wrong') return false;
             if(mockUnansweredOnly && q.mock_status) return false;
             if(bookmarkOnly && !q.bookmark) return false;
@@ -8380,8 +8340,7 @@ function startMockExam() {
         const weighted=[];
         pool.forEach(q=>{
             weighted.push(q);
-            if(q.my_status==='wrong') { weighted.push(q); weighted.push(q); } // 3배
-            else if(q.my_status==='retry') { weighted.push(q); } // 2배
+            if(q.mock_status==='wrong') { weighted.push(q); weighted.push(q); } // 3배
         });
         // 중복 제거 후 랜덤 셔플 (가중치 반영)
         for(let i=weighted.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[weighted[i],weighted[j]]=[weighted[j],weighted[i]];}
