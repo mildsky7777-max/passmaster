@@ -2017,7 +2017,7 @@ body.focus-mode .main-wrap {
     border: 1.5px solid var(--border);
     font-weight: 700;
 }
-.adf-chip { padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--bg); color: var(--text-sub); font-size: 0.82em; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.adf-chip { padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--bg); color: var(--text-sub); font-size: 0.82em; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; flex-shrink: 0; white-space: nowrap; }
 .adf-chip.adf-active { background: var(--primary); color: white; border-color: var(--primary); }
 
 /* ============================================================
@@ -4058,22 +4058,22 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
             <div id="archiveInsightText" style="font-size:0.82em;color:#78350F;line-height:1.6"></div>
         </div>
             <div id="archiveFieldTabs" style="margin-bottom:4px"></div>
-                        <div id="archiveDateFilter" style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
-                <button onclick="setArchiveDateFilter('all')"  id="adf-all"  class="adf-chip adf-active">전체</button>
+                        <div id="archiveDateFilter" style="display:flex;gap:6px;margin-bottom:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none">
+                <button onclick="setArchiveDateFilter('all')"  id="adf-all"  class="adf-chip adf-active" style="flex-shrink:0">전체</button>
                 <button onclick="setArchiveDateFilter('today')" id="adf-today" class="adf-chip">오늘</button>
                 <button onclick="setArchiveDateFilter('week')"  id="adf-week"  class="adf-chip">이번 주</button>
                 <button onclick="setArchiveDateFilter('month')" id="adf-month" class="adf-chip">이번 달</button>
             </div>
             <!-- 출처 필터 -->
-            <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
-                <span style="font-size:0.75em;font-weight:700;color:var(--text-muted);align-self:center">출처</span>
+            <div style="display:flex;gap:6px;margin-bottom:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none">
+                <span style="font-size:0.75em;font-weight:700;color:var(--text-muted);align-self:center;flex-shrink:0">출처</span>
                 <button onclick="setArchiveSourceFilter('all')" id="asf-all" class="adf-chip adf-active">전체</button>
                 <button onclick="setArchiveSourceFilter('mock')" id="asf-mock" class="adf-chip">🎯 모의고사</button>
                 <button onclick="setArchiveSourceFilter('normal')" id="asf-normal" class="adf-chip">📖 일반학습</button>
             </div>
             <!-- 오답 횟수 필터 -->
-            <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
-                <span style="font-size:0.75em;font-weight:700;color:var(--text-muted);align-self:center">횟수</span>
+            <div style="display:flex;gap:6px;margin-bottom:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none">
+                <span style="font-size:0.75em;font-weight:700;color:var(--text-muted);align-self:center;flex-shrink:0">횟수</span>
                 <button onclick="setArchiveCountFilter('all')" id="acf-all" class="adf-chip adf-active">전체</button>
                 <button onclick="setArchiveCountFilter('1')" id="acf-1" class="adf-chip">1회</button>
                 <button onclick="setArchiveCountFilter('2')" id="acf-2" class="adf-chip">2회</button>
@@ -6035,7 +6035,7 @@ function renderArchiveList() {
     if(tabsEl) {
         const usedFields = [...new Set(wrongArchive.map(a => fieldMap[a.tag]||getAutoField(a.tag)).filter(Boolean))];
         if(usedFields.length > 0) {
-            let html = `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">`;
+            let html = `<div style="display:flex;gap:6px;margin-bottom:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none">`;
             html += `<span class="arc-ftab ${archiveFieldFilter==='all'?'active':''}" onclick="setArchiveFieldFilter('all');archiveTagFilter='all';archiveSubjectFilter='all';renderArchiveList()">전체</span>`;
             usedFields.forEach(f => {
                 html += `<span class="arc-ftab ${archiveFieldFilter===f?'active':''}" style="${archiveFieldFilter===f?'background:'+FIELD_COLORS[f]+';color:#fff;border-color:'+FIELD_COLORS[f]:''}" onclick="setArchiveFieldFilter('${f}');archiveTagFilter='all';archiveSubjectFilter='all';renderArchiveList()">${f}</span>`;
@@ -6050,7 +6050,7 @@ function renderArchiveList() {
         if(archiveFieldFilter !== 'all') {
             const tagsInField = [...new Set(wrongArchive.filter(a => (fieldMap[a.tag]||getAutoField(a.tag))===archiveFieldFilter).map(a => a.tag||'기타'))].sort();
             if(tagsInField.length > 1) {
-                let html = `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"><span style="font-size:0.75em;font-weight:700;color:var(--text-muted);align-self:center;white-space:nowrap">문제집</span>`;
+                let html = `<div style="display:flex;gap:6px;margin-bottom:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none"><span style="font-size:0.75em;font-weight:700;color:var(--text-muted);align-self:center;white-space:nowrap;flex-shrink:0">문제집</span>`;
                 html += `<button onclick="setArchiveTagFilter('all')" class="adf-chip ${archiveTagFilter==='all'?'adf-active':''}">전체</button>`;
                 tagsInField.forEach(t => {
                     const label = t.replace(/^s/, '').replace(/^조경/, '').replace(/^전기/, ''); // 짧게 표시
@@ -6069,7 +6069,7 @@ function renderArchiveList() {
             const srcForSubject = wrongArchive.filter(a => (a.tag||'기타')===archiveTagFilter);
             const usedSubjects = [...new Set(srcForSubject.map(a => a.subject||'미분류'))].sort();
             if(usedSubjects.length > 1) {
-                let html = `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"><span style="font-size:0.75em;font-weight:700;color:var(--text-muted);align-self:center;white-space:nowrap">과목</span>`;
+                let html = `<div style="display:flex;gap:6px;margin-bottom:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none"><span style="font-size:0.75em;font-weight:700;color:var(--text-muted);align-self:center;white-space:nowrap;flex-shrink:0">과목</span>`;
                 html += `<button onclick="setArchiveSubjectFilter('all')" class="adf-chip ${archiveSubjectFilter==='all'?'adf-active':''}">전체</button>`;
                 usedSubjects.forEach(s => {
                     html += `<button onclick="setArchiveSubjectFilter('${s.replace(/'/g,"\'")}');renderArchiveList()" class="adf-chip ${archiveSubjectFilter===s?'adf-active':''}" style="${archiveSubjectFilter===s?'background:var(--primary);color:#fff;border-color:var(--primary);':''}">${s}</button>`;
