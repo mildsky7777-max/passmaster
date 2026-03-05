@@ -6547,7 +6547,15 @@ function switchDashTab(tab) {
    HELPERS
 ============================================================ */
 // 로컬 저장만 (내부용)
-function saveDataLocal() { localStorage.setItem('quizData_v50',JSON.stringify(bank)); localStorage.setItem('userStats_v50',JSON.stringify(userStats)); }
+function saveDataLocal() {
+    // ai_tip, original_explanation 제외하고 저장 (localStorage 용량 절약)
+    const bankLite = bank.map(q => {
+        const { ai_tip, original_explanation, ...rest } = q;
+        return rest;
+    });
+    localStorage.setItem('quizData_v50', JSON.stringify(bankLite));
+    localStorage.setItem('userStats_v50', JSON.stringify(userStats));
+}
 
 // V160: 디바운스 배치 저장 — 연속 호출 시 마지막 호출만 실행 (성능 최적화)
 function saveData() {
