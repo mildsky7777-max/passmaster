@@ -3956,9 +3956,24 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                     <button class="mock-cnt-btn" data-min="90">90분</button>
                 </div>
             </div>
-            <div style="margin-bottom:12px">
+            <div style="margin-bottom:8px">
                 <label style="display:flex;align-items:center;gap:8px;font-size:0.9em;font-weight:600;cursor:pointer">
-                    <input type="checkbox" id="mockWrongOnly" style="width:16px;height:16px"> 오답/미풀이 문제만 출제
+                    <input type="checkbox" id="mockWrongOnly" style="width:16px;height:16px"> ❌ 오답 문제만 출제 <span style="font-size:0.78em;color:var(--text-muted);font-weight:400">(일반학습 기준)</span>
+                </label>
+            </div>
+            <div style="margin-bottom:8px">
+                <label style="display:flex;align-items:center;gap:8px;font-size:0.9em;font-weight:600;cursor:pointer">
+                    <input type="checkbox" id="mockUnansweredOnly" style="width:16px;height:16px"> ✏️ 미풀이 문제만 출제 <span style="font-size:0.78em;color:var(--text-muted);font-weight:400">(일반학습 기준)</span>
+                </label>
+            </div>
+            <div style="margin-bottom:8px">
+                <label style="display:flex;align-items:center;gap:8px;font-size:0.9em;font-weight:600;cursor:pointer">
+                    <input type="checkbox" id="mockMockWrongOnly" style="width:16px;height:16px"> 🎯 모의고사 오답만 출제 <span style="font-size:0.78em;color:var(--text-muted);font-weight:400">(모의고사 기록 기준)</span>
+                </label>
+            </div>
+            <div style="margin-bottom:8px">
+                <label style="display:flex;align-items:center;gap:8px;font-size:0.9em;font-weight:600;cursor:pointer">
+                    <input type="checkbox" id="mockMockUnansweredOnly" style="width:16px;height:16px"> 📝 모의고사 미풀이만 출제 <span style="font-size:0.78em;color:var(--text-muted);font-weight:400">(모의고사 기록 기준)</span>
                 </label>
             </div>
             <div style="margin-bottom:12px">
@@ -3974,6 +3989,8 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
             <div id="mockDedupInfo" style="font-size:0.82em;color:var(--text-muted);margin-bottom:8px;text-align:center;padding:6px 10px;background:var(--bg);border-radius:8px;border:1px dashed var(--border)">
                 📚 중복 제외: <b id="mockUsedCount">0</b>문제 이미 출제 &nbsp;|&nbsp;
                 <button onclick="resetMockUsedKeys()" style="background:none;border:none;color:var(--primary);font-size:0.9em;font-weight:700;cursor:pointer;padding:0">🔄 초기화</button>
+                &nbsp;|&nbsp;
+                <button onclick="resetMockStatus()" style="background:none;border:none;color:var(--danger);font-size:0.9em;font-weight:700;cursor:pointer;padding:0">🗑️ 모의고사 기록 초기화</button>
             </div>
             <button onclick="startMockExam()" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--primary),#7C3AED);color:#fff;border:none;border-radius:14px;font-size:1em;font-weight:800;cursor:pointer">🚀 시험 시작</button>
         </div>
@@ -7981,6 +7998,20 @@ function updateMockDedupInfo() {
     const el = document.getElementById('mockUsedCount');
     if(el) el.innerText = mockUsedQuestionKeys.size;
 }
+function clearMockFilterOptions() {
+    ['mockWrongOnly','mockUnansweredOnly','mockMockWrongOnly','mockMockUnansweredOnly','mockBookmarkOnly'].forEach(id=>{
+        const el=document.getElementById(id); if(el) el.checked=false;
+    });
+}
+
+function resetMockStatus() {
+    if(!confirm('모의고사 풀이 기록을 모두 초기화할까요? (일반 학습 기록은 유지됩니다)')) return;
+    bank.forEach(q => { delete q.mock_status; });
+    saveData();
+    renderMockFieldStats();
+    showToast('🎯 모의고사 기록이 초기화되었습니다.', 'success');
+}
+
 async function resetMockUsedKeys() {
     mockUsedQuestionKeys.clear();
     localStorage.removeItem('mockUsedKeys_v165');
@@ -8095,38 +8126,56 @@ function renderMockFieldStats() {
     if(pool.length === 0) { el.style.display='none'; return; }
 
     const total = pool.length;
-    const solved = pool.filter(q => q.my_status === 'correct' || q.my_status === 'wrong' || q.my_ans).length;
+    // 일반학습 기준
+    const solved = pool.filter(q => q.my_status).length;
     const wrong = pool.filter(q => q.my_status === 'wrong').length;
+    const unanswered = total - solved;
+    // 모의고사 기준
+    const mockSolved = pool.filter(q => q.mock_status).length;
+    const mockWrong = pool.filter(q => q.mock_status === 'wrong').length;
+    const mockUnanswered = total - mockSolved;
     const bookmarked = pool.filter(q => q.bookmark).length;
-    const remaining = total - solved;
     const acc = solved > 0 ? Math.round(pool.filter(q => q.my_status === 'correct').length / solved * 100) : null;
+    const mockAcc = mockSolved > 0 ? Math.round(pool.filter(q => q.mock_status === 'correct').length / mockSolved * 100) : null;
 
     el.style.display = 'block';
     el.innerHTML = `
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
-            <div style="background:var(--surface);border-radius:10px;padding:10px;text-align:center;border:1px solid var(--border)">
-                <div style="font-size:1.4em;font-weight:900;color:var(--primary)">${total}</div>
-                <div style="font-size:0.75em;color:var(--text-muted);margin-top:2px">총 문제</div>
+        <div style="font-size:0.78em;font-weight:700;color:var(--text-muted);margin-bottom:6px">📊 일반학습 기준</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
+            <div style="background:var(--surface);border-radius:10px;padding:8px;text-align:center;border:1px solid var(--border)">
+                <div style="font-size:1.3em;font-weight:900;color:var(--primary)">${total}</div>
+                <div style="font-size:0.7em;color:var(--text-muted);margin-top:1px">총 문제</div>
             </div>
-            <div style="background:var(--surface);border-radius:10px;padding:10px;text-align:center;border:1px solid var(--border);cursor:pointer" onclick="document.getElementById('mockWrongOnly').checked=false;document.getElementById('mockBookmarkOnly').checked=false;startMockExam()">
-                <div style="font-size:1.4em;font-weight:900;color:var(--success)">${solved}</div>
-                <div style="font-size:0.75em;color:var(--text-muted);margin-top:2px">풀었음 ▶</div>
+            <div style="background:var(--surface);border-radius:10px;padding:8px;text-align:center;border:1px solid var(--border);cursor:pointer" onclick="clearMockFilterOptions();document.getElementById('mockWrongOnly').checked=true;startMockExam()">
+                <div style="font-size:1.3em;font-weight:900;color:var(--danger)">${wrong}</div>
+                <div style="font-size:0.7em;color:var(--text-muted);margin-top:1px">❌ 오답 ▶</div>
             </div>
-            <div style="background:var(--surface);border-radius:10px;padding:10px;text-align:center;border:1px solid var(--border);cursor:pointer" onclick="document.getElementById('mockWrongOnly').checked=true;document.getElementById('mockBookmarkOnly').checked=false;startMockExam()">
-                <div style="font-size:1.4em;font-weight:900;color:var(--danger)">${wrong}</div>
-                <div style="font-size:0.75em;color:var(--text-muted);margin-top:2px">오답 ▶</div>
-            </div>
-            <div style="background:var(--surface);border-radius:10px;padding:10px;text-align:center;border:1px solid var(--border);cursor:pointer" onclick="document.getElementById('mockBookmarkOnly').checked=true;document.getElementById('mockWrongOnly').checked=false;startMockExam()">
-                <div style="font-size:1.4em;font-weight:900;color:#F59E0B">${bookmarked}</div>
-                <div style="font-size:0.75em;color:var(--text-muted);margin-top:2px">⭐ 북마크 ▶</div>
+            <div style="background:var(--surface);border-radius:10px;padding:8px;text-align:center;border:1px solid var(--border);cursor:pointer" onclick="clearMockFilterOptions();document.getElementById('mockUnansweredOnly').checked=true;startMockExam()">
+                <div style="font-size:1.3em;font-weight:900;color:var(--warning)">${unanswered}</div>
+                <div style="font-size:0.7em;color:var(--text-muted);margin-top:1px">✏️ 미풀이 ▶</div>
             </div>
         </div>
-        <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;font-size:0.82em">
-            <span style="color:var(--text-sub)">남은 문제: <b style="color:var(--warning)">${remaining}문제</b></span>
-            ${acc!==null ? `<span style="color:var(--text-sub)">정답률: <b style="color:${acc>=80?'var(--success)':acc>=60?'var(--warning)':'var(--danger)'}">${acc}%</b></span>` : '<span style="color:var(--text-muted)">아직 풀지 않음</span>'}
+        <div style="font-size:0.78em;font-weight:700;color:var(--text-muted);margin-bottom:6px">🎯 모의고사 기준</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
+            <div style="background:var(--surface);border-radius:10px;padding:8px;text-align:center;border:1px solid var(--border)">
+                <div style="font-size:1.3em;font-weight:900;color:var(--primary)">${total}</div>
+                <div style="font-size:0.7em;color:var(--text-muted);margin-top:1px">총 문제</div>
+            </div>
+            <div style="background:var(--surface);border-radius:10px;padding:8px;text-align:center;border:1px solid var(--border);cursor:pointer" onclick="clearMockFilterOptions();document.getElementById('mockMockWrongOnly').checked=true;startMockExam()">
+                <div style="font-size:1.3em;font-weight:900;color:var(--danger)">${mockWrong}</div>
+                <div style="font-size:0.7em;color:var(--text-muted);margin-top:1px">❌ 오답 ▶</div>
+            </div>
+            <div style="background:var(--surface);border-radius:10px;padding:8px;text-align:center;border:1px solid var(--border);cursor:pointer" onclick="clearMockFilterOptions();document.getElementById('mockMockUnansweredOnly').checked=true;startMockExam()">
+                <div style="font-size:1.3em;font-weight:900;color:var(--warning)">${mockUnanswered}</div>
+                <div style="font-size:0.7em;color:var(--text-muted);margin-top:1px">✏️ 미풀이 ▶</div>
+            </div>
         </div>
-        <div style="margin-top:6px;height:5px;border-radius:4px;background:var(--border);overflow:hidden">
-            <div style="height:100%;width:${total>0?Math.round(solved/total*100):0}%;background:linear-gradient(90deg,var(--primary),#7C3AED);border-radius:4px;transition:width 0.3s"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.8em;margin-bottom:6px">
+            <span>⭐ 북마크: <b style="color:#F59E0B;cursor:pointer" onclick="clearMockFilterOptions();document.getElementById('mockBookmarkOnly').checked=true;startMockExam()">${bookmarked}문제 ▶</b></span>
+            ${mockAcc!==null?`<span>모의고사 정답률: <b style="color:${mockAcc>=80?'var(--success)':mockAcc>=60?'var(--warning)':'var(--danger)'}">${mockAcc}%</b></span>`:`<span style="color:var(--text-muted)">모의고사 기록 없음</span>`}
+        </div>
+        <div style="height:5px;border-radius:4px;background:var(--border);overflow:hidden">
+            <div style="height:100%;width:${total>0?Math.round(mockSolved/total*100):0}%;background:linear-gradient(90deg,var(--primary),#7C3AED);border-radius:4px;transition:width 0.3s"></div>
         </div>`;
 }
 
@@ -8278,8 +8327,11 @@ function applyMockTotalDistribute() {
 
 function startMockExam() {
     const wrongOnly=document.getElementById('mockWrongOnly').checked;
+    const unansweredOnly=document.getElementById('mockUnansweredOnly')?.checked||false;
+    const mockWrongOnly=document.getElementById('mockMockWrongOnly')?.checked||false;
+    const mockUnansweredOnly=document.getElementById('mockMockUnansweredOnly')?.checked||false;
     const bookmarkOnly=document.getElementById('mockBookmarkOnly')?.checked||false;
-    const useWeighting=document.getElementById('mockWrongWeight')?.checked!==false; // 기본 true
+    const useWeighting=document.getElementById('mockWrongWeight')?.checked!==false;
     const hasSubjectQuota = document.getElementById('mockSubjectQuotaWrap').style.display!=='none';
     // 스트릭 초기화
     mockStreak=0; mockMaxStreak=0;
@@ -8292,7 +8344,10 @@ function startMockExam() {
             let subPool=bank.filter(q=>{
                 if(!mockFieldMatch(q)) return false;
                 if((q.subject||'미분류')!==subject) return false;
-                if(wrongOnly && q.my_status!=='wrong' && q.my_status) return false;
+                if(wrongOnly && q.my_status!=='wrong') return false;
+                if(unansweredOnly && q.my_status) return false;
+                if(mockWrongOnly && q.mock_status!=='wrong') return false;
+                if(mockUnansweredOnly && q.mock_status) return false;
                 if(bookmarkOnly && !q.bookmark) return false;
                 return true;
             });
@@ -8306,7 +8361,13 @@ function startMockExam() {
         // 기존 전체 셔플 모드
         pool=bank.filter(q=>{
             if(!mockFieldMatch(q)) return false;
-            if(wrongOnly && q.my_status!=='wrong' && q.my_status) return false;
+            // 일반학습 기준 필터
+            if(wrongOnly && q.my_status!=='wrong') return false;
+            if(unansweredOnly && q.my_status) return false;
+            // 모의고사 기준 필터
+            if(mockWrongOnly && q.mock_status!=='wrong') return false;
+            if(mockUnansweredOnly && q.mock_status) return false;
+            if(bookmarkOnly && !q.bookmark) return false;
             return true;
         });
         for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
@@ -8679,6 +8740,13 @@ function showMockResult(){
     const elapsed=mockTimerLimit>0?`${mockTimerLimit}분 제한`:null;
     mockHistory.unshift({ date:dateStr, label, acc, correct:mockCorrect, wrong:mockWrong, total:mockQuestions.length, time:elapsed, subjects:subjectSummary, avgTime: timeAnalysis.avgTime });
     saveMockHistory();
+
+    // ── 모의고사 전용 풀이 상태 저장 (일반학습과 별개) ──
+    mockQuestions.forEach(q => {
+        if(q._mockResult === 'correct') q.mock_status = 'correct';
+        else if(q._mockResult === 'wrong') q.mock_status = 'wrong';
+    });
+    saveData(); // mock_status를 bank에 반영
 
     // ── 출제된 문제 키 기록 (중복 방지용) ──
     mockQuestions.forEach(q => {
