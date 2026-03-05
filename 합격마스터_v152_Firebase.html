@@ -8193,16 +8193,31 @@ function applyMockTotalDistribute() {
             mockSubjectQuota[s] = max;
         });
     } else {
-        // 균등 분배: 나머지는 첫 번째 과목에 추가
-        const perSubject = Math.floor(mockTargetTotal / subjects.length);
-        const remainder = mockTargetTotal - perSubject * subjects.length;
-        subjects.forEach((s, i) => {
-            const max = bank.filter(q => {
+        // 균등 분배 후 부족분 재분배
+        const subjectMaxes = {};
+        subjects.forEach(s => {
+            subjectMaxes[s] = bank.filter(q => {
                 if(!mockFieldMatch(q)) return false;
                 return (q.subject||'미분류') === s;
             }).length;
-            mockSubjectQuota[s] = Math.min(max, perSubject + (i === 0 ? remainder : 0));
         });
+        const perSubject = Math.floor(mockTargetTotal / subjects.length);
+        const remainder = mockTargetTotal - perSubject * subjects.length;
+        // 1차 배분
+        subjects.forEach((s, i) => {
+            mockSubjectQuota[s] = Math.min(subjectMaxes[s], perSubject + (i === 0 ? remainder : 0));
+        });
+        // 2차: 부족분 계산 후 여유 있는 과목에 재분배
+        let leftover = mockTargetTotal - subjects.reduce((a,s) => a + mockSubjectQuota[s], 0);
+        if(leftover > 0) {
+            subjects.forEach(s => {
+                if(leftover <= 0) return;
+                const spare = subjectMaxes[s] - mockSubjectQuota[s];
+                const add = Math.min(spare, leftover);
+                mockSubjectQuota[s] += add;
+                leftover -= add;
+            });
+        }
     }
     // UI 업데이트
     subjects.forEach(s => {
@@ -8268,15 +8283,19 @@ function startMockExam() {
 
     // ── 중복 출제 방지: 이전에 출제된 문제 제외 ──
     const makeKey = q => (q.tag||'기타')+'||'+q.question.trim().slice(0,80);
-    let freshPool = pool.filter(q => !mockUsedQuestionKeys.has(makeKey(q)));
-    // 만약 새 문제가 부족하면(전부 소진) 중복 허용 후 리셋
     const targetN = parseInt(document.getElementById('mockTotalInput')?.value||'20') || pool.length;
-    if(freshPool.length < Math.min(targetN, 5)) {
-        mockUsedQuestionKeys.clear();
-        freshPool = pool;
-        showToast('🔄 출제 문제가 소진되어 처음부터 다시 시작합니다.');
+    let freshPool = pool.filter(q => !mockUsedQuestionKeys.has(makeKey(q)));
+    // 새 문제가 targetN보다 부족하면 이미 출제된 문제로 보충
+    if(freshPool.length < targetN) {
+        const usedPool = pool.filter(q => mockUsedQuestionKeys.has(makeKey(q)));
+        // usedPool 셔플
+        for(let i=usedPool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[usedPool[i],usedPool[j]]=[usedPool[j],usedPool[i]];}
+        const needed = targetN - freshPool.length;
+        freshPool = [...freshPool, ...usedPool.slice(0, needed)];
+        if(usedPool.length > 0) showToast(`📚 새 문제 부족 — 이전 문제 ${Math.min(needed,usedPool.length)}개로 보충했습니다.`);
     }
-    pool = freshPool;
+    // targetN개로 자르기
+    pool = freshPool.slice(0, targetN);
 
     mockQuestions=pool;
     mockIdx=0; mockCorrect=0; mockWrong=0; mockAnswered=false;
@@ -8461,25 +8480,9 @@ function submitMockAnswer(){
             }
         })();
     } else {
-        // 기존 tip이 있으면 바로 표시 (이미 _buildMockAnswerDetail 대신 여기서 처리 안 해도 됨)
         const detailEl = document.createElement('div');
         detailEl.innerHTML = _buildMockAnswerDetail(q);
-        // 첫 번째 자식부터 추가
         while(detailEl.firstChild) document.getElementById('mockQuizBody').appendChild(detailEl.firstChild);
-    }
-    // 해설
-    if(q.original_explanation){
-        const explWrap=document.createElement('div');
-        explWrap.style.cssText='margin-top:10px;';
-        explWrap.innerHTML=`
-            <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.innerText=this.nextElementSibling.style.display==='none'?'💡 해설 보기 ▼':'💡 해설 닫기 ▲';"
-                style="width:100%;padding:10px 14px;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;font-size:0.88em;font-weight:700;color:var(--primary);cursor:pointer;text-align:left">
-                💡 해설 보기 ▼
-            </button>
-            <div style="display:none;margin-top:6px;font-size:0.92em;color:var(--text-sub);background:var(--surface);border-radius:0 0 12px 12px;padding:14px;line-height:1.7;border:1.5px solid var(--border);border-top:none">
-                ${escapeHtml(q.original_explanation).replace(/\n/g,'<br>')}
-            </div>`;
-        document.getElementById('mockQuizBody').appendChild(explWrap);
     }
 
     document.getElementById('mockSubmitBtn').style.display='none';
@@ -8575,11 +8578,6 @@ function selectMockDontKnow(){
     const detailDiv=document.createElement('div');
     detailDiv.innerHTML=_buildMockAnswerDetail(q);
     while(detailDiv.firstChild) document.getElementById('mockQuizBody').appendChild(detailDiv.firstChild);
-    if(q.original_explanation){
-        const explWrap=document.createElement('div'); explWrap.style.cssText='margin-top:10px;';
-        explWrap.innerHTML=`<button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.innerText=this.nextElementSibling.style.display==='none'?'💡 해설 보기 ▼':'💡 해설 닫기 ▲';" style="width:100%;padding:10px 14px;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;font-size:0.88em;font-weight:700;color:var(--primary);cursor:pointer;text-align:left">💡 해설 보기 ▼</button><div style="display:none;margin-top:6px;font-size:0.92em;color:var(--text-sub);background:var(--surface);border-radius:0 0 12px 12px;padding:14px;line-height:1.7;border:1.5px solid var(--border);border-top:none">${escapeHtml(q.original_explanation).replace(/\n/g,'<br>')}</div>`;
-        document.getElementById('mockQuizBody').appendChild(explWrap);
-    }
     document.getElementById('mockSubmitBtn').style.display='none';
     document.getElementById('mockNextBtn').style.display='block';
     document.getElementById('mockNextBtn').innerText=mockIdx===mockQuestions.length-1?'결과 보기 🏆':'다음 ▶';
