@@ -7958,8 +7958,8 @@ async function loadMockHistory() {
     } catch(e){ mockHistory=[]; }
     // 중복 방지: 마지막 시험 출제 문제 키 복원
     try {
-        const usedOnline = await onlineLoad('mockUsedKeys_v155', null);
-        const usedLocal = JSON.parse(localStorage.getItem('mockUsedKeys_v155')||'[]');
+        const usedOnline = await onlineLoad('mockUsedKeys_v165', null);
+        const usedLocal = JSON.parse(localStorage.getItem('mockUsedKeys_v165')||'[]');
         const used = usedOnline || usedLocal;
         mockUsedQuestionKeys = new Set(used);
     } catch(e) { mockUsedQuestionKeys = new Set(); }
@@ -7971,8 +7971,8 @@ async function saveMockHistory() {
 }
 async function saveMockUsedKeys() {
     const arr = [...mockUsedQuestionKeys].slice(-500); // 최근 500개만
-    localStorage.setItem('mockUsedKeys_v155', JSON.stringify(arr));
-    await onlineSave('mockUsedKeys_v155', arr);
+    localStorage.setItem('mockUsedKeys_v165', JSON.stringify(arr));
+    await onlineSave('mockUsedKeys_v165', arr);
 }
 
 function updateMockDedupInfo() {
@@ -7981,8 +7981,8 @@ function updateMockDedupInfo() {
 }
 async function resetMockUsedKeys() {
     mockUsedQuestionKeys.clear();
-    localStorage.removeItem('mockUsedKeys_v155');
-    try { if(window.fbDb && window.fbUser) await window.fbDb.ref('users/'+window.fbUser.uid+'/misc/mockUsedKeys_v155').remove(); } catch(e){}
+    localStorage.removeItem('mockUsedKeys_v165');
+    try { if(window.fbDb && window.fbUser) await window.fbDb.ref('users/'+window.fbUser.uid+'/misc/mockUsedKeys_v165').remove(); } catch(e){}
     updateMockDedupInfo();
     showToast('✅ 출제 이력이 초기화되었습니다. 모든 문제가 다시 출제됩니다.');
 }
