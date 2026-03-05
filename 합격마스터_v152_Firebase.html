@@ -8188,6 +8188,7 @@ function applyMockTotalDistribute() {
         subjects.forEach(s => {
             const max = bank.filter(q => {
                 if(!mockFieldMatch(q)) return false;
+                if(activeTags.size>0 && !activeTags.has(q.tag||'기타')) return false;
                 return (q.subject||'미분류') === s;
             }).length;
             mockSubjectQuota[s] = max;
@@ -8198,6 +8199,7 @@ function applyMockTotalDistribute() {
         subjects.forEach(s => {
             subjectMaxes[s] = bank.filter(q => {
                 if(!mockFieldMatch(q)) return false;
+                if(activeTags.size>0 && !activeTags.has(q.tag||'기타')) return false;
                 return (q.subject||'미분류') === s;
             }).length;
         });
@@ -8243,6 +8245,7 @@ function startMockExam() {
             if(count<=0) return;
             let subPool=bank.filter(q=>{
                 if(!mockFieldMatch(q)) return false;
+                if(activeTags.size>0 && !activeTags.has(q.tag||'기타')) return false;
                 if((q.subject||'미분류')!==subject) return false;
                 if(wrongOnly && q.my_status!=='wrong' && q.my_status) return false;
                 if(bookmarkOnly && !q.bookmark) return false;
@@ -8258,6 +8261,8 @@ function startMockExam() {
         // 기존 전체 셔플 모드
         pool=bank.filter(q=>{
             if(!mockFieldMatch(q)) return false;
+            if(activeTags.size>0 && !activeTags.has(q.tag||'기타')) return false;
+            if(activeSubjects.size>0 && !activeSubjects.has(q.subject||'미분류(공통)')) return false;
             if(wrongOnly && q.my_status!=='wrong' && q.my_status) return false;
             return true;
         });
