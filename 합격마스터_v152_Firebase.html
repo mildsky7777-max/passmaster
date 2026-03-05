@@ -8365,6 +8365,13 @@ function startMockExam() {
     // targetN개로 자르기
     pool = freshPool.slice(0, targetN);
 
+    // 이전 시험 상태 클리어
+    pool.forEach(q => {
+        delete q._mockResult;
+        delete q._mockMyAns;
+        delete q._mockTimeSpent;
+    });
+
     mockQuestions=pool;
     mockIdx=0; mockCorrect=0; mockWrong=0; mockAnswered=false;
     mockIsRetryMode=false;
