@@ -6026,46 +6026,58 @@ function renderArchiveList() {
     const sort=document.getElementById('archiveSortSelect').value;
     const FIELD_COLORS={'산안기':'#EF4444','조경':'#10B981','전기':'#F59E0B'};
 
-    // 분야 탭 렌더
-    let tabsEl=document.getElementById('archiveFieldTabs');
-    if(tabsEl){
-        const usedFields=[...new Set(wrongArchive.map(a=>{ const f=fieldMap[a.tag]||getAutoField(a.tag); return f; }).filter(Boolean))];
-        if(usedFields.length>1){
-            let tabHtml=`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">`;
-            tabHtml+=`<span class="arc-ftab ${archiveFieldFilter==='all'?'active':''}" onclick="setArchiveFieldFilter('all')">전체</span>`;
-            usedFields.forEach(f=>{ tabHtml+=`<span class="arc-ftab ${archiveFieldFilter===f?'active':''}" style="${archiveFieldFilter===f?'background:'+FIELD_COLORS[f]+';color:#fff;border-color:'+FIELD_COLORS[f]:''}" onclick="setArchiveFieldFilter('${f}')">${f}</span>`; });
-            tabHtml+=`</div>`;
-            tabsEl.innerHTML=tabHtml;
-        } else { tabsEl.innerHTML=''; }
+    // ── 계층 필터 렌더: 분야 → 문제집(선택시) → 과목(선택시) ──
+    const tabsEl = document.getElementById('archiveFieldTabs');
+    const tagRow = document.getElementById('archiveTagFilterRow');
+    const subjectRow = document.getElementById('archiveSubjectFilterRow');
+
+    // 1단계: 분야 버튼
+    if(tabsEl) {
+        const usedFields = [...new Set(wrongArchive.map(a => fieldMap[a.tag]||getAutoField(a.tag)).filter(Boolean))];
+        if(usedFields.length > 0) {
+            let html = `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">`;
+            html += `<span class="arc-ftab ${archiveFieldFilter==='all'?'active':''}" onclick="setArchiveFieldFilter('all');archiveTagFilter='all';archiveSubjectFilter='all';renderArchiveList()">전체</span>`;
+            usedFields.forEach(f => {
+                html += `<span class="arc-ftab ${archiveFieldFilter===f?'active':''}" style="${archiveFieldFilter===f?'background:'+FIELD_COLORS[f]+';color:#fff;border-color:'+FIELD_COLORS[f]:''}" onclick="setArchiveFieldFilter('${f}');archiveTagFilter='all';archiveSubjectFilter='all';renderArchiveList()">${f}</span>`;
+            });
+            html += `</div>`;
+            tabsEl.innerHTML = html;
+        } else { tabsEl.innerHTML = ''; }
     }
 
-    // 문제집 필터 버튼 동적 렌더
-    const tagRow = document.getElementById('archiveTagFilterRow');
+    // 2단계: 문제집 버튼 (분야 선택 시에만 표시)
     if(tagRow) {
-        const usedTags = [...new Set(wrongArchive.map(a => a.tag||'기타'))].sort();
-        if(usedTags.length > 1) {
-            let html = '<span style="font-size:0.75em;font-weight:700;color:var(--text-muted);align-self:center">문제집</span>';
-            html += `<button onclick="setArchiveTagFilter('all')" class="adf-chip ${archiveTagFilter==='all'?'adf-active':''}">전체</button>`;
-            usedTags.forEach(t => {
-                html += `<button onclick="setArchiveTagFilter('${t.replace(/'/g,"\'")}')" class="adf-chip ${archiveTagFilter===t?'adf-active':''}" style="${archiveTagFilter===t?'background:var(--primary);color:#fff;border-color:var(--primary)':''}">${t}</button>`;
-            });
-            tagRow.innerHTML = html;
-            tagRow.style.display = 'flex';
+        if(archiveFieldFilter !== 'all') {
+            const tagsInField = [...new Set(wrongArchive.filter(a => (fieldMap[a.tag]||getAutoField(a.tag))===archiveFieldFilter).map(a => a.tag||'기타'))].sort();
+            if(tagsInField.length > 1) {
+                let html = `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"><span style="font-size:0.75em;font-weight:700;color:var(--text-muted);align-self:center;white-space:nowrap">문제집</span>`;
+                html += `<button onclick="setArchiveTagFilter('all')" class="adf-chip ${archiveTagFilter==='all'?'adf-active':''}">전체</button>`;
+                tagsInField.forEach(t => {
+                    const label = t.replace(/^s/, '').replace(/^조경/, '').replace(/^전기/, ''); // 짧게 표시
+                    html += `<button onclick="setArchiveTagFilter('${t.replace(/'/g,"\'")}');archiveSubjectFilter='all';renderArchiveList()" class="adf-chip ${archiveTagFilter===t?'adf-active':''}" style="${archiveTagFilter===t?'background:var(--primary);color:#fff;border-color:var(--primary);':''}">${t}</button>`;
+                });
+                html += `</div>`;
+                tagRow.innerHTML = html;
+                tagRow.style.display = 'block';
+            } else { tagRow.innerHTML = ''; tagRow.style.display = 'none'; }
         } else { tagRow.innerHTML = ''; tagRow.style.display = 'none'; }
     }
-    // 과목 필터 버튼 동적 렌더 (선택된 문제집 기준)
-    const subjectRow = document.getElementById('archiveSubjectFilterRow');
+
+    // 3단계: 과목 버튼 (문제집 선택 시에만 표시)
     if(subjectRow) {
-        const srcForSubject = archiveTagFilter==='all' ? wrongArchive : wrongArchive.filter(a=>(a.tag||'기타')===archiveTagFilter);
-        const usedSubjects = [...new Set(srcForSubject.map(a => a.subject||'미분류'))].sort();
-        if(usedSubjects.length > 1) {
-            let html = '<span style="font-size:0.75em;font-weight:700;color:var(--text-muted);align-self:center">과목</span>';
-            html += `<button onclick="setArchiveSubjectFilter('all')" class="adf-chip ${archiveSubjectFilter==='all'?'adf-active':''}">전체</button>`;
-            usedSubjects.forEach(s => {
-                html += `<button onclick="setArchiveSubjectFilter('${s.replace(/'/g,"\'")}')" class="adf-chip ${archiveSubjectFilter===s?'adf-active':''}" style="${archiveSubjectFilter===s?'background:var(--primary);color:#fff;border-color:var(--primary)':''}">${s}</button>`;
-            });
-            subjectRow.innerHTML = html;
-            subjectRow.style.display = 'flex';
+        if(archiveTagFilter !== 'all') {
+            const srcForSubject = wrongArchive.filter(a => (a.tag||'기타')===archiveTagFilter);
+            const usedSubjects = [...new Set(srcForSubject.map(a => a.subject||'미분류'))].sort();
+            if(usedSubjects.length > 1) {
+                let html = `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"><span style="font-size:0.75em;font-weight:700;color:var(--text-muted);align-self:center;white-space:nowrap">과목</span>`;
+                html += `<button onclick="setArchiveSubjectFilter('all')" class="adf-chip ${archiveSubjectFilter==='all'?'adf-active':''}">전체</button>`;
+                usedSubjects.forEach(s => {
+                    html += `<button onclick="setArchiveSubjectFilter('${s.replace(/'/g,"\'")}');renderArchiveList()" class="adf-chip ${archiveSubjectFilter===s?'adf-active':''}" style="${archiveSubjectFilter===s?'background:var(--primary);color:#fff;border-color:var(--primary);':''}">${s}</button>`;
+                });
+                html += `</div>`;
+                subjectRow.innerHTML = html;
+                subjectRow.style.display = 'block';
+            } else { subjectRow.innerHTML = ''; subjectRow.style.display = 'none'; }
         } else { subjectRow.innerHTML = ''; subjectRow.style.display = 'none'; }
     }
 
