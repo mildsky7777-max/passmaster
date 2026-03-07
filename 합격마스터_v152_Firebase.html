@@ -1013,12 +1013,12 @@ input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary)
 .session-stat-label { font-size: 0.73em; color: var(--text-muted); margin-top: 4px; }
 
 /* Archive */
-.archive-item { background: var(--surface); border-radius: 14px; padding: 14px; margin-bottom: 10px; border-left: 4px solid var(--danger); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-.archive-item-q { font-size: 0.93em; font-weight: 700; color: var(--text); line-height: 1.4; margin-bottom: 6px; }
-.archive-item-ans { font-size: 0.83em; color: var(--success); font-weight: 700; margin-bottom: 4px; }
+.archive-item { background: var(--surface); border-radius: 10px; padding: 8px 10px; margin-bottom: 4px; border-left: 3px solid var(--danger); box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+.archive-item-q { font-size: 0.88em; font-weight: 700; color: var(--text); line-height: 1.4; margin-bottom: 2px; }
+.archive-item-ans { font-size: 0.8em; color: var(--success); font-weight: 700; margin-bottom: 2px; }
 .archive-item-meta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px; }
-.archive-item-info { font-size: 0.74em; color: var(--text-muted); display: flex; gap: 6px; flex-wrap: wrap; }
-.archive-item-info span { background: var(--bg); padding: 2px 6px; border-radius: 6px; }
+.archive-item-info { font-size: 0.7em; color: var(--text-muted); display: flex; gap: 4px; flex-wrap: wrap; }
+.archive-item-info span { background: var(--bg); padding: 1px 5px; border-radius: 5px; }
 .archive-wrong-count { background: var(--danger-light); color: var(--danger); font-size: 0.74em; font-weight: 800; padding: 2px 8px; border-radius: 8px; }
 .archive-del-btn { background: var(--bg); border: none; color: var(--text-muted); cursor: pointer; border-radius: 8px; padding: 4px 8px; font-size: 0.8em; }
 .archive-stats-bar { display: flex; background: var(--bg); border-radius: 12px; padding: 12px; gap: 4px; margin-bottom: 12px; }
@@ -2663,7 +2663,7 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
 }
 
 /* ── 아카이브 아이템 ── */
-.archive-item { border-radius: 16px !important; border-left-width: 3px !important; }
+.archive-item { border-radius: 10px !important; border-left-width: 3px !important; }
 
 /* ── 반응형: 작은 화면 ── */
 @media (max-width: 400px) {
@@ -4085,49 +4085,51 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                 </div>
             </div>
             <div class="archive-stats-bar" id="archiveStatsBar"></div>
-        <div id="archiveInsightCard" style="display:none;margin:8px 0;padding:12px 14px;background:linear-gradient(135deg,#FEF3C7,#FEF9C3);border-radius:12px;border-left:3px solid var(--warning)">
-            <div style="font-size:0.8em;font-weight:800;color:#92400E;margin-bottom:4px">💡 약점 인사이트</div>
-            <div id="archiveInsightText" style="font-size:0.82em;color:#78350F;line-height:1.6"></div>
-        </div>
-            <div id="archiveFieldTabs" style="margin-bottom:4px"></div>
-                        <div id="archiveDateFilter" style="display:flex;gap:6px;margin-bottom:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none">
-                <button onclick="setArchiveDateFilter('all')"  id="adf-all"  class="adf-chip adf-active" style="flex-shrink:0">전체</button>
-                <button onclick="setArchiveDateFilter('today')" id="adf-today" class="adf-chip">오늘</button>
-                <button onclick="setArchiveDateFilter('week')"  id="adf-week"  class="adf-chip">이번 주</button>
-                <button onclick="setArchiveDateFilter('month')" id="adf-month" class="adf-chip">이번 달</button>
-            </div>
-            <!-- 출처 필터 -->
-            <div style="display:flex;gap:6px;margin-bottom:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none">
-                <span style="font-size:0.75em;font-weight:700;color:var(--text-muted);align-self:center;flex-shrink:0">출처</span>
-                <button onclick="setArchiveSourceFilter('all')" id="asf-all" class="adf-chip adf-active">전체</button>
-                <button onclick="setArchiveSourceFilter('mock')" id="asf-mock" class="adf-chip">🎯 모의고사</button>
-                <button onclick="setArchiveSourceFilter('normal')" id="asf-normal" class="adf-chip">📖 일반학습</button>
-            </div>
-            <!-- 오답 횟수 필터 -->
-            <div style="display:flex;gap:6px;margin-bottom:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none">
-                <span style="font-size:0.75em;font-weight:700;color:var(--text-muted);align-self:center;flex-shrink:0">횟수</span>
-                <button onclick="setArchiveCountFilter('all')" id="acf-all" class="adf-chip adf-active">전체</button>
-                <button onclick="setArchiveCountFilter('1')" id="acf-1" class="adf-chip">1회</button>
-                <button onclick="setArchiveCountFilter('2')" id="acf-2" class="adf-chip">2회</button>
-                <button onclick="setArchiveCountFilter('3+')" id="acf-3" class="adf-chip">3회+</button>
-            </div>
-            <!-- 문제집/과목 동적 필터 -->
-            <div id="archiveTagFilterRow" style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap"></div>
-            <div id="archiveSubjectFilterRow" style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap"></div>
-            <input class="archive-search" id="archiveSearch" placeholder="🔍 문제 / 과목 / 문제집 검색" oninput="renderArchiveList()">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-                <select id="archiveSortSelect" onchange="renderArchiveList()" style="padding:7px 10px;border-radius:10px;border:1.5px solid var(--border);font-size:0.83em;background:var(--bg);outline:none;color:var(--text)">
-                    <option value="date_desc">🕐 최근 오답순</option>
-                    <option value="count_desc">🔢 오답 횟수 많은순</option>
-                    <option value="tag">📂 문제집별</option>
-                </select>
+            <!-- 필터 접기/펼치기 -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+                <button onclick="toggleArchiveFilter()" id="archiveFilterToggleBtn" style="font-size:0.78em;color:var(--text-muted);background:none;border:1.5px solid var(--border);border-radius:8px;padding:4px 10px;cursor:pointer;font-weight:700">🔽 필터 펼치기</button>
                 <div style="display:flex;gap:6px">
                     <button onclick="exportArchiveCSV()" style="font-size:0.8em;color:var(--success);background:var(--success-light);border:none;font-weight:700;cursor:pointer;padding:7px 10px;border-radius:10px">📊 CSV</button>
                     <button onclick="clearAllArchive()" style="font-size:0.8em;color:var(--danger);background:var(--danger-light);border:none;font-weight:700;cursor:pointer;padding:7px 10px;border-radius:10px">전체 삭제</button>
                 </div>
             </div>
+            <!-- 접히는 필터 영역 -->
+            <div id="archiveFilterPanel" style="display:none;margin-top:8px">
+                <div id="archiveInsightCard" style="display:none;margin:8px 0;padding:12px 14px;background:linear-gradient(135deg,#FEF3C7,#FEF9C3);border-radius:12px;border-left:3px solid var(--warning)">
+                    <div style="font-size:0.8em;font-weight:800;color:#92400E;margin-bottom:4px">💡 약점 인사이트</div>
+                    <div id="archiveInsightText" style="font-size:0.82em;color:#78350F;line-height:1.6"></div>
+                </div>
+                <div id="archiveFieldTabs" style="margin-bottom:4px"></div>
+                <div id="archiveDateFilter" style="display:flex;gap:6px;margin-bottom:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none">
+                    <button onclick="setArchiveDateFilter('all')"  id="adf-all"  class="adf-chip adf-active" style="flex-shrink:0">전체</button>
+                    <button onclick="setArchiveDateFilter('today')" id="adf-today" class="adf-chip">오늘</button>
+                    <button onclick="setArchiveDateFilter('week')"  id="adf-week"  class="adf-chip">이번 주</button>
+                    <button onclick="setArchiveDateFilter('month')" id="adf-month" class="adf-chip">이번 달</button>
+                </div>
+                <div style="display:flex;gap:6px;margin-bottom:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none">
+                    <span style="font-size:0.75em;font-weight:700;color:var(--text-muted);align-self:center;flex-shrink:0">출처</span>
+                    <button onclick="setArchiveSourceFilter('all')" id="asf-all" class="adf-chip adf-active">전체</button>
+                    <button onclick="setArchiveSourceFilter('mock')" id="asf-mock" class="adf-chip">🎯 모의고사</button>
+                    <button onclick="setArchiveSourceFilter('normal')" id="asf-normal" class="adf-chip">📖 일반학습</button>
+                </div>
+                <div style="display:flex;gap:6px;margin-bottom:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none">
+                    <span style="font-size:0.75em;font-weight:700;color:var(--text-muted);align-self:center;flex-shrink:0">횟수</span>
+                    <button onclick="setArchiveCountFilter('all')" id="acf-all" class="adf-chip adf-active">전체</button>
+                    <button onclick="setArchiveCountFilter('1')" id="acf-1" class="adf-chip">1회</button>
+                    <button onclick="setArchiveCountFilter('2')" id="acf-2" class="adf-chip">2회</button>
+                    <button onclick="setArchiveCountFilter('3+')" id="acf-3" class="adf-chip">3회+</button>
+                </div>
+                <div id="archiveTagFilterRow" style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap"></div>
+                <div id="archiveSubjectFilterRow" style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap"></div>
+                <input class="archive-search" id="archiveSearch" placeholder="🔍 문제 / 과목 / 분야 검색" oninput="renderArchiveList()">
+                <select id="archiveSortSelect" onchange="renderArchiveList()" style="margin-top:8px;width:100%;padding:7px 10px;border-radius:10px;border:1.5px solid var(--border);font-size:0.83em;background:var(--bg);outline:none;color:var(--text)">
+                    <option value="date_desc">🕐 최근 오답순</option>
+                    <option value="count_desc">🔢 오답 횟수 많은순</option>
+                    <option value="tag">📂 문제집별</option>
+                </select>
+            </div>
         </div>
-        <div id="archiveList" style="-webkit-overflow-scrolling:touch;overflow-y:auto;flex:1;min-height:0;padding:14px"></div>
+        <div id="archiveList" style="-webkit-overflow-scrolling:touch;overflow-y:auto;flex:1;min-height:0;padding:8px 10px"></div>
     </div>
 </div>
 
@@ -6151,6 +6153,19 @@ function getDateFilterFn() {
  // 'all' | '산안기' | '조경' | '전기'
 function setArchiveFieldFilter(f){ archiveFieldFilter=f; renderArchiveList(); }
 
+function toggleArchiveFilter() {
+    const panel = document.getElementById('archiveFilterPanel');
+    const btn = document.getElementById('archiveFilterToggleBtn');
+    const isOpen = panel.style.display !== 'none';
+    panel.style.display = isOpen ? 'none' : 'block';
+    btn.textContent = isOpen ? '🔽 필터 펼치기' : '🔼 필터 접기';
+}
+
+function toggleArchiveItem(id) {
+    const el = document.getElementById('arc-detail-' + id);
+    if(el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
 /* F: 오답 아카이브 약점 인사이트 */
 function renderArchiveInsight() {
     const card = document.getElementById('archiveInsightCard');
@@ -6213,32 +6228,17 @@ function renderArchiveList() {
         } else { tabsEl.innerHTML = ''; }
     }
 
-    // 2단계: 문제집 버튼 (분야 선택 시에만 표시)
-    if(tagRow) {
-        if(archiveFieldFilter !== 'all') {
-            const tagsInField = [...new Set(wrongArchive.filter(a => (fieldMap[a.tag]||getAutoField(a.tag))===archiveFieldFilter).map(a => a.tag||'기타'))].sort();
-            if(tagsInField.length > 1) {
-                let html = `<div style="display:flex;gap:6px;margin-bottom:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none"><span style="font-size:0.75em;font-weight:700;color:var(--text-muted);align-self:center;white-space:nowrap;flex-shrink:0">문제집</span>`;
-                html += `<button onclick="setArchiveTagFilter('all')" class="adf-chip ${archiveTagFilter==='all'?'adf-active':''}">전체</button>`;
-                tagsInField.forEach(t => {
-                    const label = t.replace(/^s/, '').replace(/^조경/, '').replace(/^전기/, ''); // 짧게 표시
-                    html += `<button onclick="setArchiveTagFilter('${t.replace(/'/g,"\'")}');archiveSubjectFilter='all';renderArchiveList()" class="adf-chip ${archiveTagFilter===t?'adf-active':''}" style="${archiveTagFilter===t?'background:var(--primary);color:#fff;border-color:var(--primary);':''}">${t}</button>`;
-                });
-                html += `</div>`;
-                tagRow.innerHTML = html;
-                tagRow.style.display = 'block';
-            } else { tagRow.innerHTML = ''; tagRow.style.display = 'none'; }
-        } else { tagRow.innerHTML = ''; tagRow.style.display = 'none'; }
-    }
+    // 문제집 행 숨김 (분야→과목 2단계로 단순화)
+    if(tagRow) { tagRow.innerHTML = ''; tagRow.style.display = 'none'; }
 
-    // 3단계: 과목 버튼 (문제집 선택 시에만 표시)
+    // 2단계: 과목 버튼 (분야 선택 시 바로 표시)
     if(subjectRow) {
-        if(archiveTagFilter !== 'all') {
-            const srcForSubject = wrongArchive.filter(a => (a.tag||'기타')===archiveTagFilter);
+        if(archiveFieldFilter !== 'all') {
+            const srcForSubject = wrongArchive.filter(a => (fieldMap[a.tag]||getAutoField(a.tag))===archiveFieldFilter);
             const usedSubjects = [...new Set(srcForSubject.map(a => a.subject||'미분류'))].sort();
             if(usedSubjects.length > 1) {
                 let html = `<div style="display:flex;gap:6px;margin-bottom:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none"><span style="font-size:0.75em;font-weight:700;color:var(--text-muted);align-self:center;white-space:nowrap;flex-shrink:0">과목</span>`;
-                html += `<button onclick="setArchiveSubjectFilter('all')" class="adf-chip ${archiveSubjectFilter==='all'?'adf-active':''}">전체</button>`;
+                html += `<button onclick="setArchiveSubjectFilter('all');renderArchiveList()" class="adf-chip ${archiveSubjectFilter==='all'?'adf-active':''}">전체</button>`;
                 usedSubjects.forEach(s => {
                     html += `<button onclick="setArchiveSubjectFilter('${s.replace(/'/g,"\'")}');renderArchiveList()" class="adf-chip ${archiveSubjectFilter===s?'adf-active':''}" style="${archiveSubjectFilter===s?'background:var(--primary);color:#fff;border-color:var(--primary);':''}">${s}</button>`;
                 });
@@ -6271,13 +6271,18 @@ function renderArchiveList() {
         const qField=fieldMap[a.tag]||getAutoField(a.tag);
         const fieldBadge=qField?`<span style="font-size:0.72em;padding:2px 7px;border-radius:10px;font-weight:700;color:#fff;background:${FIELD_COLORS[qField]||'#64748B'}">${qField}</span>`:'';
         return `<div class="archive-item" id="arc-${a.id}">
-            <div class="archive-item-q">${escapeHtml(a.question)}</div>
-            <div class="archive-item-ans">✅ 정답: ${escapeHtml(a.answer)}</div>
-            <div class="archive-item-meta">
-                <div class="archive-item-info">${fieldBadge}<span>📂 ${escapeHtml(a.tag)}</span><span>📚 ${escapeHtml(a.subject)}</span><span>📅 ${a.lastDate||''}</span>${practiceStr}</div>
-                <div style="display:flex;align-items:center;gap:6px"><span class="archive-wrong-count">❌ ${a.wrongCount||1}회</span><button class="archive-del-btn" onclick="deleteArchiveItem('${a.id}')">🗑</button></div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
+                <div class="archive-item-q" style="cursor:pointer;flex:1" onclick="toggleArchiveItem('${a.id}')">${escapeHtml(a.question)}</div>
+                <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+                    <span class="archive-wrong-count" style="font-size:0.72em">❌${a.wrongCount||1}</span>
+                    <button class="archive-del-btn" onclick="deleteArchiveItem('${a.id}')">🗑</button>
+                </div>
             </div>
-            ${a.original_explanation?`<div style="margin-top:8px;font-size:0.79em;color:var(--text-sub);background:var(--bg);border-radius:8px;padding:8px;line-height:1.5;max-height:80px;overflow:hidden;-webkit-overflow-scrolling:touch;overflow-y:auto">${escapeHtml(a.original_explanation)}</div>`:''}
+            <div id="arc-detail-${a.id}" style="display:none;margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
+                <div class="archive-item-ans">✅ 정답: ${escapeHtml(a.answer)}</div>
+                <div class="archive-item-info" style="margin-bottom:4px">${fieldBadge}<span>📚 ${escapeHtml(a.subject)}</span><span>📅 ${a.lastDate||''}</span>${practiceStr}</div>
+                ${a.original_explanation?`<div style="font-size:0.79em;color:var(--text-sub);background:var(--bg);border-radius:8px;padding:8px;line-height:1.5">${escapeHtml(a.original_explanation)}</div>`:''}
+            </div>
         </div>`;
     }).join('');
     // V162: 오답노트 수식 렌더링
@@ -6299,7 +6304,7 @@ function getFilteredArchiveList() {
         if(!dateFilterFn(a)) return false;
         if(keyword && !(a.question+a.tag+a.subject+a.answer).toLowerCase().includes(keyword)) return false;
         if(archiveFieldFilter!=='all'){ const af=fieldMap[a.tag]||getAutoField(a.tag); if(af!==archiveFieldFilter) return false; }
-        if(archiveTagFilter!=='all' && (a.tag||'기타')!==archiveTagFilter) return false;
+        // 문제집 필터 제거됨 (분야→과목 2단계)
         if(archiveSubjectFilter!=='all' && (a.subject||'미분류')!==archiveSubjectFilter) return false;
         if(archiveCountFilter==='1' && (a.wrongCount||1)!==1) return false;
         if(archiveCountFilter==='2' && (a.wrongCount||1)!==2) return false;
@@ -8383,7 +8388,8 @@ function renderMockFieldStats() {
     if(pool.length === 0) { el.style.display='none'; return; }
 
     const total = pool.length;
-    const mockSolved = pool.filter(q => q.mock_status).length;
+    const _mkKey = q => (q.tag||'기타')+'||'+q.question.trim().slice(0,80);
+    const mockSolved = pool.filter(q => q.mock_status || mockUsedQuestionKeys.has(_mkKey(q))).length;
     const mockWrong = pool.filter(q => q.mock_status === 'wrong').length;
     const mockUnanswered = total - mockSolved;
     const bookmarked = pool.filter(q => q.bookmark).length;
