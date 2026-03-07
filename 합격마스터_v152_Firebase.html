@@ -3697,6 +3697,13 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
             <button class="s-btn" style="background:var(--bg);color:var(--text);height:52px;font-size:0.8em" onclick="resetSpecific('viewed')">👁 읽음<br>기록 삭제</button>
         </div>
         <hr style="border:0;border-top:1px solid var(--border);margin:14px 0">
+        <div style="margin-bottom:10px">
+            <div style="font-size:0.88em;font-weight:800;color:var(--danger);margin-bottom:8px">🗂 분야별 문제 삭제</div>
+            <div style="font-size:0.8em;color:var(--text-sub);margin-bottom:10px">선택한 분야의 <b>문제 데이터 자체</b>를 삭제합니다. (풀이 기록 포함)</div>
+            <div id="fieldDeleteList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
+            <button onclick="deleteSelectedFields()" style="width:100%;padding:11px;background:var(--danger);color:white;border:none;border-radius:12px;font-size:0.88em;font-weight:700;cursor:pointer">🗑 선택한 분야 삭제</button>
+        </div>
+        <hr style="border:0;border-top:1px solid var(--border);margin:14px 0">
         <button class="m-btn m-btn-danger m-btn-full" onclick="resetSpecific('all')">🗑 전체 데이터 삭제 (Factory Reset)</button>
     </div>
 </div>
@@ -5890,7 +5897,49 @@ function selectOptionByKeyboard(idx) {
 /* ============================================================
    RESET / DATA
 ============================================================ */
-function openResetModal() { document.getElementById('resetModal').style.display='flex'; }
+function openResetModal() {
+    document.getElementById('resetModal').style.display='flex';
+    renderFieldDeleteList();
+}
+
+function renderFieldDeleteList() {
+    const el = document.getElementById('fieldDeleteList');
+    if(!el) return;
+    // 현재 bank에 있는 분야 목록 추출
+    const fields = [...new Set(bank.map(q => fieldMap[q.tag||'기타'] || getAutoField(q.tag||'기타') || '기타'))].filter(Boolean).sort();
+    if(fields.length === 0) { el.innerHTML = '<span style="font-size:0.82em;color:var(--text-muted)">문제 데이터 없음</span>'; return; }
+    const fieldColors = {'산안기':'#EF4444','조경':'#10B981','전기':'#F59E0B'};
+    el.innerHTML = fields.map(f => {
+        const count = bank.filter(q => (fieldMap[q.tag||'기타']||getAutoField(q.tag||'기타')||'기타') === f).length;
+        const color = fieldColors[f] || '#6B7280';
+        return `<label style="display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:20px;border:2px solid ${color}20;background:${color}10;cursor:pointer;user-select:none" id="fdlabel-${f}">
+            <input type="checkbox" id="fd-${f}" style="accent-color:${color};width:15px;height:15px" onchange="updateFieldDeleteLabel('${f}','${color}')">
+            <span style="font-size:0.85em;font-weight:700;color:${color}">${f}</span>
+            <span style="font-size:0.75em;color:var(--text-muted)">${count}문제</span>
+        </label>`;
+    }).join('');
+}
+
+function updateFieldDeleteLabel(f, color) {
+    const checked = document.getElementById('fd-'+f)?.checked;
+    const label = document.getElementById('fdlabel-'+f);
+    if(label) label.style.background = checked ? color+'30' : color+'10';
+    if(label) label.style.borderColor = checked ? color : color+'20';
+}
+
+function deleteSelectedFields() {
+    const fields = [...document.querySelectorAll('#fieldDeleteList input[type=checkbox]:checked')].map(el => el.id.replace('fd-',''));
+    if(fields.length === 0) { showToast('삭제할 분야를 선택해주세요.', 'warning'); return; }
+    const totalCount = bank.filter(q => fields.includes(fieldMap[q.tag||'기타']||getAutoField(q.tag||'기타')||'기타')).length;
+    showConfirm(`🗑 [${fields.join(', ')}] 분야\n총 ${totalCount}개 문제를 삭제합니다.\n\n이 작업은 되돌릴 수 없습니다.`, () => {
+        bank = bank.filter(q => !fields.includes(fieldMap[q.tag||'기타']||getAutoField(q.tag||'기타')||'기타'));
+        saveData();
+        initActiveTagsAndSubjects();
+        applyFilter(); updateUI(); updateStatsUI();
+        renderFieldDeleteList();
+        showToast(`🗑 [${fields.join(', ')}] ${totalCount}개 문제 삭제 완료`, 'success');
+    });
+}
 
 function resetSpecificNow(type) {
     if(type==='all'){ localStorage.removeItem('quizData_v50'); localStorage.removeItem('userStats_v50'); localStorage.removeItem('wrongArchive_v50'); location.reload(); return; }
