@@ -6570,9 +6570,9 @@ function switchDashTab(tab) {
 ============================================================ */
 // 로컬 저장만 (내부용)
 function saveDataLocal() {
-    // ai_tip, original_explanation 제외하고 저장 (localStorage 용량 절약)
+    // ai_tip만 제외하고 저장 (original_explanation은 모의고사 해설에 필요)
     const bankLite = bank.map(q => {
-        const { ai_tip, original_explanation, ...rest } = q;
+        const { ai_tip, ...rest } = q;
         return rest;
     });
     localStorage.setItem('quizData_v50', JSON.stringify(bankLite));
@@ -8430,20 +8430,67 @@ function startMockExam() {
     let pool=[];
     if(hasSubjectQuota && Object.values(mockSubjectQuota).some(v=>v>0) && !mockUnansweredOnly && !mockWrongOnly) {
         // 과목별 문제 수 지정 모드 (미풀이/오답 필터 시엔 스킵)
+        const poolSet = new Set(); // 중복 방지용
+        let shortage = 0; // 각 과목에서 부족한 문제 수 합산
+
         Object.entries(mockSubjectQuota).forEach(([subject, count])=>{
             if(count<=0) return;
             let subPool=bank.filter(q=>{
                 if(!mockFieldMatch(q)) return false;
                 if((q.subject||'미분류')!==subject) return false;
-                if(mockWrongOnly && q.mock_status!=='wrong') return false;
-                if(mockUnansweredOnly && q.mock_status) return false;
                 if(bookmarkOnly && !q.bookmark) return false;
                 return true;
             });
-            // 셔플 후 count개 추출
+            // 셔플
             for(let i=subPool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[subPool[i],subPool[j]]=[subPool[j],subPool[i]];}
-            pool.push(...subPool.slice(0,count));
+
+            // 안 푼 문제 우선, 부족하면 푼 문제로 보충
+            const fresh = subPool.filter(q => !q.mock_status);
+            const solved = subPool.filter(q => q.mock_status);
+            let taken = 0;
+            for(const q of fresh) { if(taken >= count) break; if(!poolSet.has(q)) { poolSet.add(q); taken++; } }
+            if(taken < count) {
+                shortage += count - taken; // 부족분 기록
+                for(const q of solved) { if(taken >= count) break; if(!poolSet.has(q)) { poolSet.add(q); taken++; } }
+            }
         });
+
+        pool = [...poolSet];
+
+        // 부족분을 다른 과목 미풀이로 대치
+        if(shortage > 0) {
+            const usedSubjects = new Set(Object.keys(mockSubjectQuota).filter(s => (mockSubjectQuota[s]||0) > 0));
+            const extraPool = bank.filter(q => {
+                if(!mockFieldMatch(q)) return false;
+                if(poolSet.has(q)) return false; // 이미 포함된 문제 제외
+                if(q.mock_status) return false; // 미풀이만
+                if(bookmarkOnly && !q.bookmark) return false;
+                // 배분에 포함된 과목 제외 (다른 과목에서만)
+                return !usedSubjects.has(q.subject||'미분류');
+            });
+            // 배분 과목 포함해서도 찾기 (다른 과목 미풀이 없을 경우 대비)
+            const extraPoolAll = bank.filter(q => {
+                if(!mockFieldMatch(q)) return false;
+                if(poolSet.has(q)) return false;
+                if(q.mock_status) return false;
+                if(bookmarkOnly && !q.bookmark) return false;
+                return true;
+            });
+            const fillSource = extraPool.length >= shortage ? extraPool : extraPoolAll;
+            for(let i=fillSource.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[fillSource[i],fillSource[j]]=[fillSource[j],fillSource[i]];}
+            const filled = fillSource.slice(0, shortage);
+            pool.push(...filled);
+            if(filled.length > 0) {
+                // 어느 과목에서 몇 개 채웠는지 집계
+                const fillSummary = {};
+                filled.forEach(q => { const s = q.subject||'미분류'; fillSummary[s] = (fillSummary[s]||0)+1; });
+                const summaryStr = Object.entries(fillSummary).map(([s,n])=>`${s} ${n}개`).join(', ');
+                showToast(`🔄 부족분 ${filled.length}개를 다른 과목 미풀이로 대치했습니다 (${summaryStr})`, 'success');
+            } else if(shortage > 0) {
+                showToast(`⚠️ 일부 과목 문제가 부족합니다. 총 ${pool.length}개로 진행합니다.`, 'warning');
+            }
+        }
+
         // 전체 셔플
         for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
     } else {
