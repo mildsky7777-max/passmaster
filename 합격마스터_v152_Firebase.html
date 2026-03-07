@@ -8388,7 +8388,8 @@ function renderMockFieldStats() {
     if(pool.length === 0) { el.style.display='none'; return; }
 
     const total = pool.length;
-    const mockSolved = pool.filter(q => q.mock_status).length;
+    const _mkKey = q => (q.tag||'기타')+'||'+q.question.trim().slice(0,80);
+    const mockSolved = pool.filter(q => q.mock_status || mockUsedQuestionKeys.has(_mkKey(q))).length;
     const mockWrong = pool.filter(q => q.mock_status === 'wrong').length;
     const mockUnanswered = total - mockSolved;
     const bookmarked = pool.filter(q => q.bookmark).length;
@@ -8865,9 +8866,9 @@ function submitMockAnswer(){
     // 과목별 실시간 통계 업데이트
     updateMockSubjectStats();
 
-    // AI Tip 비동기 로드 (API 키 있고, 기존 tip이 전혀 없을 때만 실시간 호출)
+    // AI Tip 비동기 로드 (API 키 있을 때만)
     const _apiKey = localStorage.getItem('claudeApiKey');
-    if(_apiKey && !q._ai_realtime_text && !q.ai_tip && !q.original_explanation){
+    if(_apiKey && !q._ai_realtime_text && !q.ai_tip){
         const mockAiWrap = document.createElement('div');
         mockAiWrap.id = 'mockAiTipWrap';
         mockAiWrap.style.cssText = 'margin-top:14px;background:linear-gradient(135deg,#EFF6FF,#F5F3FF);border-radius:14px;padding:16px;border:1.5px solid #C7D2FE;font-size:0.9em;line-height:1.7;';
