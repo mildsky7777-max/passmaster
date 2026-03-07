@@ -8686,7 +8686,12 @@ function renderMockQuestion() {
     }
 
     // 문제 본문
-    let html=`<div style="font-size:1.1em;font-weight:600;line-height:1.7;margin-bottom:18px;white-space:pre-wrap;color:var(--text)">${escapeHtml(q.question)}</div>`;
+    const fieldColor = {'산안기':'#EF4444','조경':'#10B981','전기':'#F59E0B'}[fieldMap[q.tag||'기타']||getAutoField(q.tag||'기타')] || '#6B7280';
+    let html=`<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <span style="font-size:0.75em;font-weight:700;padding:3px 10px;border-radius:20px;background:${fieldColor}18;color:${fieldColor};border:1.5px solid ${fieldColor}40">${escapeHtml(q.tag||'기타')}</span>
+        ${q.subject ? `<span style="font-size:0.72em;padding:3px 8px;border-radius:20px;background:var(--surface);color:var(--text-sub);border:1px solid var(--border)">${escapeHtml(q.subject)}</span>` : ''}
+    </div>
+    <div style="font-size:1.1em;font-weight:600;line-height:1.7;margin-bottom:18px;white-space:pre-wrap;color:var(--text)">${escapeHtml(q.question)}</div>`;
     if(q.options&&q.options.length>0){
         html+=q.options.map((opt,i)=>{
             let cls='mock-opt';
