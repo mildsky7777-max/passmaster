@@ -8724,8 +8724,8 @@ function prevMockQuestion(){
 // 이미 채점된 문제의 해설 영역 HTML 생성
 function _buildMockAnswerDetail(q){
     let html='';
-    // AI Tip
-    const tip = q._ai_realtime_text || q.ai_tip;
+    // AI Tip (일반 퀴즈 모드와 동일한 fallback 로직)
+    const tip = q._ai_realtime_text || q.ai_tip || (q.original_explanation ? '💡 AI 요약: ' + q.original_explanation : null);
     html+=`<div style="margin-top:14px;background:linear-gradient(135deg,#EFF6FF,#F5F3FF);border-radius:14px;padding:16px;border:1.5px solid #C7D2FE;font-size:0.9em;line-height:1.7;">
         <span style="font-weight:800;color:#4F46E5">🤖 AI Tip</span>
         <div style="margin-top:8px;color:#1E1B4B;white-space:pre-line">${tip ? (tip.replace(/\n/g,'<br>')) : '<span style="color:#9CA3AF;font-size:0.85em">⚙️ AI Tip 없음</span>'}</div>
