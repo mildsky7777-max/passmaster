@@ -8428,8 +8428,8 @@ function startMockExam() {
     mockStreak=0; mockMaxStreak=0;
 
     let pool=[];
-    if(hasSubjectQuota && Object.values(mockSubjectQuota).some(v=>v>0)) {
-        // 과목별 문제 수 지정 모드
+    if(hasSubjectQuota && Object.values(mockSubjectQuota).some(v=>v>0) && !mockUnansweredOnly && !mockWrongOnly) {
+        // 과목별 문제 수 지정 모드 (미풀이/오답 필터 시엔 스킵)
         Object.entries(mockSubjectQuota).forEach(([subject, count])=>{
             if(count<=0) return;
             let subPool=bank.filter(q=>{
