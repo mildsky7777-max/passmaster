@@ -8865,9 +8865,9 @@ function submitMockAnswer(){
     // 과목별 실시간 통계 업데이트
     updateMockSubjectStats();
 
-    // AI Tip 비동기 로드 (API 키 있을 때만)
+    // AI Tip 비동기 로드 (API 키 있고, 기존 tip이 전혀 없을 때만 실시간 호출)
     const _apiKey = localStorage.getItem('claudeApiKey');
-    if(_apiKey && !q._ai_realtime_text && !q.ai_tip){
+    if(_apiKey && !q._ai_realtime_text && !q.ai_tip && !q.original_explanation){
         const mockAiWrap = document.createElement('div');
         mockAiWrap.id = 'mockAiTipWrap';
         mockAiWrap.style.cssText = 'margin-top:14px;background:linear-gradient(135deg,#EFF6FF,#F5F3FF);border-radius:14px;padding:16px;border:1.5px solid #C7D2FE;font-size:0.9em;line-height:1.7;';
