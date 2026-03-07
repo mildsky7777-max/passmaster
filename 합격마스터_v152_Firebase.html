@@ -4064,6 +4064,7 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
             <div id="mockTimeAnalysis" style="margin:16px 0;text-align:left"></div>
             <div id="mockResultList" style="text-align:left;margin-top:16px"></div>
             <div style="display:flex;gap:10px;margin-top:18px;justify-content:center;flex-wrap:wrap">
+                <button id="mockReturnStudyBtn" onclick="returnToStudyFromMock()" style="display:none;padding:12px 20px;background:linear-gradient(135deg,#10B981,#059669);color:#fff;border:none;border-radius:12px;font-size:0.9em;font-weight:700;cursor:pointer">📖 이어서 학습하기</button>
                 <button id="mockRetryWrongBtn" onclick="retryMockWrongQuestions()" style="display:none;padding:12px 20px;background:linear-gradient(135deg,#DC2626,#EF4444);color:#fff;border:none;border-radius:12px;font-size:0.9em;font-weight:700;cursor:pointer">🔄 틀린문제 다시풀기</button>
                 <button onclick="copyMockWrongReport()" style="padding:12px 20px;background:var(--bg);color:var(--text);border:1.5px solid var(--border);border-radius:12px;font-size:0.9em;font-weight:700;cursor:pointer">📋 오답 리포트</button>
                 <button onclick="switchMockTab('history');document.getElementById('mockExamResult').style.display='none';document.getElementById('mockExamSetup').style.display='block';" style="padding:12px 20px;background:var(--bg);color:var(--text);border:1.5px solid var(--border);border-radius:12px;font-size:0.9em;font-weight:700;cursor:pointer">📋 기록 보기</button>
@@ -8188,6 +8189,7 @@ function getConsecutiveWrong(q) {
    분야별 모의고사 모드
 ============================================================ */
 let mockQuestions=[],mockIdx=0,mockCorrect=0,mockWrong=0,mockAnswered=false;
+let _mockReturnTab='quiz', _mockReturnIndex=0; // 모의고사 후 복귀 위치
 let mockTimerLimit=0,mockTimerLeft=0,mockTimerInterval=null;
 let mockSelectedField='all';
 // 모의고사 분야/문제집 필터 헬퍼
@@ -8569,6 +8571,9 @@ function startMockExam() {
     const bookmarkOnly=document.getElementById('mockBookmarkOnly')?.checked||false;
     const useWeighting=document.getElementById('mockWrongWeight')?.checked!==false;
     const hasSubjectQuota = document.getElementById('mockSubjectQuotaWrap').style.display!=='none';
+    // 모의고사 시작 전 현재 위치 저장 (결과 후 복귀용)
+    _mockReturnTab = document.body.classList.contains('card-tab-active') ? 'card' : 'quiz';
+    _mockReturnIndex = currentIndex;
     // 스트릭 초기화
     mockStreak=0; mockMaxStreak=0;
 
@@ -9081,6 +9086,14 @@ function showMockResult(){
     const retryBtn = document.getElementById('mockRetryWrongBtn');
     if(retryBtn) retryBtn.style.display = mockWrong > 0 ? 'inline-block' : 'none';
 
+    // 이어서 학습하기 버튼 표시 (카드 탭에서 왔을 때만)
+    const returnBtn = document.getElementById('mockReturnStudyBtn');
+    if(returnBtn) {
+        const label = _mockReturnTab === 'card' ? '📖 암기카드 이어서 학습' : '📝 문제풀이 이어서';
+        returnBtn.innerText = label;
+        returnBtn.style.display = 'inline-block';
+    }
+
     if(mockWrong>0){
         let wrongHtml='<h4 style="margin:0 0 10px;font-size:0.9em;color:var(--danger)">❌ 틀린 문제 ('+mockWrong+'개)</h4>';
         mockQuestions.forEach((q,i)=>{
@@ -9237,6 +9250,18 @@ function confirmExitMockExam() {
     } else {
         showMockResult();
     }
+}
+
+function returnToStudyFromMock(){
+    closeMockExam();
+    // 저장된 탭으로 전환
+    switchTab(_mockReturnTab);
+    // 저장된 인덱스로 이동
+    if(_mockReturnIndex >= 0 && _mockReturnIndex < filteredIndices.length) {
+        currentIndex = _mockReturnIndex;
+        displayQuestion(currentIndex);
+    }
+    showToast(_mockReturnTab === 'card' ? '📖 암기카드 학습으로 돌아왔습니다!' : '📝 문제풀이로 돌아왔습니다!', 'success');
 }
 
 function closeMockExam(){
