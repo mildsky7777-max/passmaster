@@ -3391,7 +3391,7 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                 <input id="editAnswerCustom" placeholder="직접 입력 (예: ①, 1, ①번...)" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:0.88em;background:var(--surface);color:var(--text);outline:none">
             </div>
         </div>
-        <button onclick="confirmEditAnswer()" style="width:100%;padding:13px;background:var(--primary);color:white;border:none;border-radius:12px;font-size:0.92em;font-weight:700;cursor:pointer">✅ 정답 수정 저장</button>
+        <button id="editAnswerSaveBtn" onclick="confirmEditAnswerUnified()" style="width:100%;padding:13px;background:var(--primary);color:white;border:none;border-radius:12px;font-size:0.92em;font-weight:700;cursor:pointer">✅ 정답 수정 저장</button>
     </div>
 </div>
 
@@ -5921,110 +5921,77 @@ function selectOptionByKeyboard(idx) {
 /* ============================================================
    RESET / DATA
 ============================================================ */
-function openEditAnswerModalMock(bankIdx) {
-    const q = bankIdx >= 0 ? bank[bankIdx] : null;
-    if(!q) return;
-    // editAnswerModal을 재활용, 저장 시 mock 문제도 같이 업데이트
+let _editAnswerBankIdx = -1;
+let _editAnswerMode = 'quiz'; // 'quiz' | 'mock'
+
+function _buildEditAnswerModal(q, mode, bankIdx) {
+    _editAnswerMode = mode;
+    _editAnswerBankIdx = bankIdx;
     document.getElementById('editAnswerQuestion').innerText = q.question.slice(0, 80) + (q.question.length > 80 ? '…' : '');
     document.getElementById('editAnswerCurrent').innerText = q.answer;
     document.getElementById('editAnswerCustom').value = '';
-
     const optDiv = document.getElementById('editAnswerOptions');
     optDiv.innerHTML = '';
     if(q.options && q.options.length > 0) {
         q.options.forEach((opt) => {
             const val = opt.split(' ')[0];
-            const isCurrentAnswer = compareAnswers(val, q.answer);
+            const isCur = compareAnswers(val, q.answer);
             const btn = document.createElement('button');
-            btn.style.cssText = `padding:9px 12px;border-radius:10px;border:1.5px solid ${isCurrentAnswer ? 'var(--primary)' : 'var(--border)'};background:${isCurrentAnswer ? 'var(--primary-light)' : 'var(--surface)'};color:${isCurrentAnswer ? 'var(--primary)' : 'var(--text)'};font-size:0.85em;font-weight:600;cursor:pointer;text-align:left`;
+            btn.style.cssText = `padding:9px 12px;border-radius:10px;border:1.5px solid ${isCur?'var(--primary)':'var(--border)'};background:${isCur?'var(--primary-light)':'var(--surface)'};color:${isCur?'var(--primary)':'var(--text)'};font-size:0.85em;font-weight:600;cursor:pointer;text-align:left;width:100%`;
             btn.innerText = opt.length > 50 ? opt.slice(0, 50) + '…' : opt;
             btn.onclick = () => {
                 document.getElementById('editAnswerCustom').value = val;
                 optDiv.querySelectorAll('button').forEach(b => { b.style.borderColor='var(--border)'; b.style.background='var(--surface)'; b.style.color='var(--text)'; });
-                btn.style.borderColor = 'var(--primary)';
-                btn.style.background = 'var(--primary-light)';
-                btn.style.color = 'var(--primary)';
+                btn.style.borderColor='var(--primary)'; btn.style.background='var(--primary-light)'; btn.style.color='var(--primary)';
             };
             optDiv.appendChild(btn);
         });
     }
-    // 저장 버튼을 모의고사 전용으로 교체
-    const saveBtn = document.querySelector('#editAnswerModal button[onclick="confirmEditAnswer()"]');
-    if(saveBtn) saveBtn.onclick = () => confirmEditAnswerMock(bankIdx);
     document.getElementById('editAnswerModal').style.display = 'flex';
-}
-
-function confirmEditAnswerMock(bankIdx) {
-    const q = bankIdx >= 0 ? bank[bankIdx] : null;
-    if(!q) return;
-    const newAns = document.getElementById('editAnswerCustom').value.trim();
-    if(!newAns) { showToast('새 정답을 선택하거나 입력해주세요.', 'warning'); return; }
-    const oldAns = q.answer;
-    q.answer = newAns;
-    // mock 문제 객체도 동기화
-    const mq = mockQuestions.find(mq => mq === q || ((mq.tag||'기타')+'||'+mq.question.trim().slice(0,80)) === ((q.tag||'기타')+'||'+q.question.trim().slice(0,80)));
-    if(mq) {
-        mq.answer = newAns;
-        if(mq._mockMyAns) mq._mockResult = compareAnswers(mq._mockMyAns, newAns) ? 'correct' : 'wrong';
-    }
-    saveData();
-    document.getElementById('editAnswerModal').style.display = 'none';
-    // 저장 버튼 원상복구
-    const saveBtn = document.querySelector('#editAnswerModal button');
-    if(saveBtn) saveBtn.onclick = confirmEditAnswer;
-    showToast(`✅ 정답 수정: ${oldAns} → ${newAns}`, 'success');
-    // 현재 문제 재렌더링
-    renderMockQuestion();
 }
 
 function openEditAnswerModal() {
     const q = bank[filteredIndices[currentIndex]];
     if(!q) return;
-    document.getElementById('editAnswerQuestion').innerText = q.question.slice(0, 80) + (q.question.length > 80 ? '…' : '');
-    document.getElementById('editAnswerCurrent').innerText = q.answer;
-    document.getElementById('editAnswerCustom').value = '';
-
-    // 선택지가 있으면 버튼으로 표시
-    const optDiv = document.getElementById('editAnswerOptions');
-    optDiv.innerHTML = '';
-    if(q.options && q.options.length > 0) {
-        q.options.forEach((opt, i) => {
-            const val = opt.split(' ')[0];
-            const isCurrentAnswer = compareAnswers(val, q.answer);
-            const btn = document.createElement('button');
-            btn.style.cssText = `padding:9px 12px;border-radius:10px;border:1.5px solid ${isCurrentAnswer ? 'var(--primary)' : 'var(--border)'};background:${isCurrentAnswer ? 'var(--primary-light)' : 'var(--surface)'};color:${isCurrentAnswer ? 'var(--primary)' : 'var(--text)'};font-size:0.85em;font-weight:600;cursor:pointer;text-align:left`;
-            btn.innerText = opt.length > 50 ? opt.slice(0, 50) + '…' : opt;
-            btn.onclick = () => {
-                document.getElementById('editAnswerCustom').value = val;
-                optDiv.querySelectorAll('button').forEach(b => { b.style.borderColor='var(--border)'; b.style.background='var(--surface)'; b.style.color='var(--text)'; });
-                btn.style.borderColor = 'var(--primary)';
-                btn.style.background = 'var(--primary-light)';
-                btn.style.color = 'var(--primary)';
-            };
-            optDiv.appendChild(btn);
-        });
-    }
-    document.getElementById('editAnswerModal').style.display = 'flex';
+    _buildEditAnswerModal(q, 'quiz', filteredIndices[currentIndex]);
 }
 
-function confirmEditAnswer() {
-    const q = bank[filteredIndices[currentIndex]];
+function openEditAnswerModalMock(bankIdx) {
+    const q = bankIdx >= 0 ? bank[bankIdx] : null;
     if(!q) return;
+    _buildEditAnswerModal(q, 'mock', bankIdx);
+}
+
+function confirmEditAnswerUnified() {
     const newAns = document.getElementById('editAnswerCustom').value.trim();
     if(!newAns) { showToast('새 정답을 선택하거나 입력해주세요.', 'warning'); return; }
+    const q = _editAnswerBankIdx >= 0 ? bank[_editAnswerBankIdx] : null;
+    if(!q) return;
     const oldAns = q.answer;
     q.answer = newAns;
-    // 현재 풀이 기록도 재평가
-    if(q.my_ans) {
-        q.my_status = compareAnswers(q.my_ans, newAns) ? 'correct' : 'wrong';
+    if(_editAnswerMode === 'quiz') {
+        if(q.my_ans) q.my_status = compareAnswers(q.my_ans, newAns) ? 'correct' : 'wrong';
+        saveData();
+        document.getElementById('editAnswerModal').style.display = 'none';
+        document.getElementById('quizAnsText').innerText = newAns;
+        displayQuestion(currentIndex);
+    } else {
+        const mq = mockQuestions.find(m => m === q);
+        if(mq && mq._mockMyAns) {
+            const wasCorrect = mq._mockResult === 'correct';
+            const nowCorrect = compareAnswers(mq._mockMyAns, newAns);
+            mq._mockResult = nowCorrect ? 'correct' : 'wrong';
+            if(wasCorrect && !nowCorrect) { mockCorrect=Math.max(0,mockCorrect-1); mockWrong++; }
+            else if(!wasCorrect && nowCorrect) { mockWrong=Math.max(0,mockWrong-1); mockCorrect++; }
+        }
+        saveData();
+        document.getElementById('editAnswerModal').style.display = 'none';
+        renderMockQuestion();
     }
-    saveData();
-    document.getElementById('editAnswerModal').style.display = 'none';
-    document.getElementById('quizAnsText').innerText = newAns;
     showToast(`✅ 정답 수정: ${oldAns} → ${newAns}`, 'success');
-    // 옵션 색상 재렌더링
-    displayQuestion(currentIndex);
 }
+
+function confirmEditAnswer() { confirmEditAnswerUnified(); }
 
 function openResetModal() {
     document.getElementById('resetModal').style.display='flex';
