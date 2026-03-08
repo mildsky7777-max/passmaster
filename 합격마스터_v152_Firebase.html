@@ -12,8 +12,8 @@
 
 <!-- KaTeX 수식 렌더링 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
 <!-- Firebase SDK: body 끝에서 로드 -->
 <style>
@@ -4085,7 +4085,6 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                 </div>
             </div>
             <div class="archive-stats-bar" id="archiveStatsBar"></div>
-            <!-- 필터 접기/펼치기 -->
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
                 <button onclick="toggleArchiveFilter()" id="archiveFilterToggleBtn" style="font-size:0.78em;color:var(--text-muted);background:none;border:1.5px solid var(--border);border-radius:8px;padding:4px 10px;cursor:pointer;font-weight:700">🔽 필터 펼치기</button>
                 <div style="display:flex;gap:6px">
@@ -4093,7 +4092,6 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                     <button onclick="clearAllArchive()" style="font-size:0.8em;color:var(--danger);background:var(--danger-light);border:none;font-weight:700;cursor:pointer;padding:7px 10px;border-radius:10px">전체 삭제</button>
                 </div>
             </div>
-            <!-- 접히는 필터 영역 -->
             <div id="archiveFilterPanel" style="display:none;margin-top:8px">
                 <div id="archiveInsightCard" style="display:none;margin:8px 0;padding:12px 14px;background:linear-gradient(135deg,#FEF3C7,#FEF9C3);border-radius:12px;border-left:3px solid var(--warning)">
                     <div style="font-size:0.8em;font-weight:800;color:#92400E;margin-bottom:4px">💡 약점 인사이트</div>
@@ -4311,21 +4309,34 @@ function wrapBareLaTeX(html) {
 }
 
 function renderMath(element) {
-    if (typeof renderMathInElement !== 'undefined' && element) {
-        try {
-            renderMathInElement(element, {
-                delimiters: [
-                    {left: '$$', right: '$$', display: true},
-                    {left: '$', right: '$', display: false},
-                    {left: '\\[', right: '\\]', display: true},
-                    {left: '\\(', right: '\\)', display: false}
-                ],
-                throwOnError: false,
-                errorColor: '#cc0000'
-            });
-        } catch(e) {
-            console.warn('KaTeX 렌더링 오류:', e);
-        }
+    if (!element) return;
+    if (typeof renderMathInElement === 'undefined') {
+        // KaTeX 아직 로드 안 됨 — 최대 3초 대기 후 재시도
+        let tries = 0;
+        const timer = setInterval(() => {
+            tries++;
+            if (typeof renderMathInElement !== 'undefined') {
+                clearInterval(timer);
+                renderMath(element);
+            } else if (tries > 30) {
+                clearInterval(timer); // 3초 후 포기
+            }
+        }, 100);
+        return;
+    }
+    try {
+        renderMathInElement(element, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\[', right: '\\]', display: true},
+                {left: '\\(', right: '\\)', display: false}
+            ],
+            throwOnError: false,
+            errorColor: '#cc0000'
+        });
+    } catch(e) {
+        console.warn('KaTeX 렌더링 오류:', e);
     }
 }
 
@@ -6228,7 +6239,7 @@ function renderArchiveList() {
         } else { tabsEl.innerHTML = ''; }
     }
 
-    // 문제집 행 숨김 (분야→과목 2단계로 단순화)
+    // 문제집 행 숨김 (분야→과목 2단계)
     if(tagRow) { tagRow.innerHTML = ''; tagRow.style.display = 'none'; }
 
     // 2단계: 과목 버튼 (분야 선택 시 바로 표시)
@@ -6304,7 +6315,7 @@ function getFilteredArchiveList() {
         if(!dateFilterFn(a)) return false;
         if(keyword && !(a.question+a.tag+a.subject+a.answer).toLowerCase().includes(keyword)) return false;
         if(archiveFieldFilter!=='all'){ const af=fieldMap[a.tag]||getAutoField(a.tag); if(af!==archiveFieldFilter) return false; }
-        // 문제집 필터 제거됨 (분야→과목 2단계)
+        // 문제집 필터 제거됨
         if(archiveSubjectFilter!=='all' && (a.subject||'미분류')!==archiveSubjectFilter) return false;
         if(archiveCountFilter==='1' && (a.wrongCount||1)!==1) return false;
         if(archiveCountFilter==='2' && (a.wrongCount||1)!==2) return false;
