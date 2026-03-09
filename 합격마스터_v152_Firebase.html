@@ -4374,6 +4374,10 @@ window.onload = function() {
     if(savedStats) userStats = JSON.parse(savedStats);
     const savedArchive = localStorage.getItem('wrongArchive_v50');
     if(savedArchive) try{ wrongArchive=JSON.parse(savedArchive); }catch(e){ wrongArchive=[]; }
+    // fromMock 필드 마이그레이션: 없는 항목은 false로 초기화
+    let archiveMigrated = false;
+    wrongArchive.forEach(a => { if(a.fromMock === undefined){ a.fromMock = false; archiveMigrated = true; } });
+    if(archiveMigrated) saveArchive();
 
     initActiveTagsAndSubjects();
 
@@ -5946,8 +5950,9 @@ function addToArchive(q) {
         wrongArchive[idx].wrongCount=(wrongArchive[idx].wrongCount||1)+1;
         wrongArchive[idx].lastDate=todayStr; wrongArchive[idx].myAns=q.my_ans;
         if(!wrongArchive[idx].options&&q.options) wrongArchive[idx].options=q.options;
+        if(q.fromMock) wrongArchive[idx].fromMock=true;
     } else {
-        wrongArchive.push({ id:String(Date.now())+String(Math.floor(Math.random()*10000)), key, question:q.question, answer:q.answer, options:q.options||[], keywords:q.keywords||[], tag:q.tag||'기타', subject:q.subject||'미분류(공통)', original_explanation:q.original_explanation||'', ai_tip:q.ai_tip||'', myAns:q.my_ans, firstDate:todayStr, lastDate:todayStr, wrongCount:1, practice_total:0, practice_correct:0 });
+        wrongArchive.push({ id:String(Date.now())+String(Math.floor(Math.random()*10000)), key, question:q.question, answer:q.answer, options:q.options||[], keywords:q.keywords||[], tag:q.tag||'기타', subject:q.subject||'미분류(공통)', original_explanation:q.original_explanation||'', ai_tip:q.ai_tip||'', myAns:q.my_ans, firstDate:todayStr, lastDate:todayStr, wrongCount:1, practice_total:0, practice_correct:0, fromMock: q.fromMock||false });
     }
     saveArchive();
 }
