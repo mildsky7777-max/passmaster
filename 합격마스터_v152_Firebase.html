@@ -87,6 +87,8 @@ body {
     -webkit-text-size-adjust: 100%; /* iOS 가로모드 자동 폰트 확대 방지 */
     text-size-adjust: 100%;
     overscroll-behavior-y: none;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: auto;
     word-break: keep-all;
     overflow-x: hidden;
 }
@@ -1271,29 +1273,7 @@ input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary)
 .pattern-count { font-size: 0.8em; font-weight: 800; color: var(--danger); }
 
 /* ===== DARK MODE ===== */
-body.dark-mode {
-    --primary: #818CF8;
-    --primary-light: #1E1B4B;
-    --primary-dark: #6366F1;
-    --success: #34D399;
-    --success-light: #064E3B;
-    --danger: #F87171;
-    --danger-light: #450A0A;
-    --warning: #FBBF24;
-    --warning-light: #451A03;
-    --bg: #1C1C1E;           /* iOS systemBackground dark */
-    --surface: #2C2C2E;      /* iOS secondarySystemBackground dark */
-    --surface2: #3A3A3C;
-    --border: #38383A;       /* iOS separator dark */
-    --border-light: #2C2C2E;
-    --text: #FFFFFF;
-    --text-sub: #AEAEB2;
-    --text-muted: #636366;
-    --shadow-xs: 0 1px 3px rgba(0,0,0,0.3);
-    --shadow: 0 2px 12px rgba(0,0,0,0.4);
-    --shadow-md: 0 4px 20px rgba(0,0,0,0.5);
-    --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
-}
+
 body.dark-mode .top-bar,
 body.dark-mode .bottom-nav { background: #2C2C2E; }
 body.dark-mode .top-bar-bg,
@@ -4045,7 +4025,7 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                     <div id="mockSubjectStats" style="display:none;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:0.78em"></div>
                 </div>
             </div>
-            <div id="mockQuizBody" style="-webkit-overflow-scrolling:touch;overflow-y:auto;flex:1;min-height:0;padding:20px 16px;max-width:var(--app-max);margin:0 auto;width:100%;box-sizing:border-box"></div>
+            <div id="mockQuizBody" style="-webkit-overflow-scrolling:touch;overflow-y:auto;flex:1;min-height:0;data-scrollable="1";padding:20px 16px;max-width:var(--app-max);margin:0 auto;width:100%;box-sizing:border-box"></div>
             <div style="padding:14px 16px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;padding-bottom:calc(14px + var(--safe-bottom))">
                 <div style="display:flex;gap:10px;max-width:var(--app-max);margin:0 auto">
                     <button id="mockPrevBtn" onclick="prevMockQuestion()" style="padding:16px 14px;background:var(--bg);color:var(--text);border:1.5px solid var(--border);border-radius:14px;font-size:1em;font-weight:700;cursor:pointer;display:none">◀ 이전</button>
@@ -4127,7 +4107,7 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                 </select>
             </div>
         </div>
-        <div id="archiveList" style="-webkit-overflow-scrolling:touch;overflow-y:auto;flex:1;min-height:0;padding:8px 10px"></div>
+        <div id="archiveList" style="-webkit-overflow-scrolling:touch;overflow-y:auto;flex:1;min-height:0;data-scrollable="1";padding:8px 10px"></div>
     </div>
 </div>
 
@@ -4266,8 +4246,8 @@ let tlInterval = null, tlRemaining = 0, tlCircumference = 113;
 let accuracyHistory2 = [];
 
 /* Ver.80 globals */
-let darkMode = localStorage.getItem('darkMode_v80') === 'true';
-let interleaveMode = localStorage.getItem('interleaveMode_v80') === 'true';
+let darkMode = false;
+let interleaveMode = false;
 let continuousCount = 0;         // 쉬지 않고 푼 문제 수 (뇌 휴식 트리거)
 let brainBreakDismissed = false;
 let reflectData = JSON.parse(localStorage.getItem('reflectData_v80') || '{}'); // {misconception,careless,unknown}
@@ -4276,7 +4256,7 @@ let reflectData = JSON.parse(localStorage.getItem('reflectData_v80') || '{}'); /
    V160 — 뇌과학 강화 전역 변수
 ============================================================ */
 let preConfidence = null;         // 사전 확신도: 'sure' | 'unsure' | 'guess' | null
-let preConfEnabled = true;        // 사전 확신도 기능 ON/OFF
+let preConfEnabled = false;        // 사전 확신도 기능 ON/OFF
 let lastSubject = '';             // 인터리빙: 이전 과목 추적
 let sessionAnswered = 0;          // 세션 내 답한 문제 수 (진행바용)
 let saveDebounceTimer = null;     // 성능: localStorage 배치 저장 타이머
@@ -4311,16 +4291,13 @@ function wrapBareLaTeX(html) {
 function renderMath(element) {
     if (!element) return;
     if (typeof renderMathInElement === 'undefined') {
-        // KaTeX 아직 로드 안 됨 — 최대 3초 대기 후 재시도
         let tries = 0;
         const timer = setInterval(() => {
             tries++;
             if (typeof renderMathInElement !== 'undefined') {
                 clearInterval(timer);
                 renderMath(element);
-            } else if (tries > 30) {
-                clearInterval(timer); // 3초 후 포기
-            }
+            } else if (tries > 30) { clearInterval(timer); }
         }, 100);
         return;
     }
@@ -4357,6 +4334,23 @@ function renderAllMath() {
 /* ============================================================
    INIT
 ============================================================ */
+// iOS Safari pull-to-refresh 방지
+(function() {
+    let lastY = 0;
+    document.addEventListener('touchstart', function(e) {
+        lastY = e.touches[0].clientY;
+    }, { passive: true });
+    document.addEventListener('touchmove', function(e) {
+        const scrollable = e.target.closest('[data-scrollable]');
+        if (scrollable) return; // 스크롤 가능 영역은 허용
+        const y = e.touches[0].clientY;
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        if (scrollTop <= 0 && y > lastY) {
+            e.preventDefault(); // 맨 위에서 아래로 당기면 차단
+        }
+    }, { passive: false });
+})();
+
 window.onload = function() {
     const savedData = localStorage.getItem('quizData_v50');
     if(savedData) bank = JSON.parse(savedData);
@@ -4792,7 +4786,7 @@ function updateUI() {
     // Options
     const optsDiv = document.getElementById('quizOptionsList');
     optsDiv.innerHTML='';
-    if(q.options){
+    if(q.options && q.options.length > 0){
         q.options.forEach((opt,i)=>{
             const div=document.createElement('div'); div.className='option-item';
             const val=opt.split(' ')[0];
@@ -5085,108 +5079,24 @@ function handleAutoAiToggle() {
     showToast(enabled ? '🔬 오답 시 자동 AI 해설 ON' : '🔬 오답 시 자동 AI 해설 OFF');
 }
 
-async function callClaudeAI(question, options, correctAnswer, myAnswer, subject, explanation) {
-    const apiKey = localStorage.getItem('claudeApiKey');
-    if(!apiKey) return null;
-
-    const isCorrect = compareAnswers(myAnswer, correctAnswer);
-    const optionsText = options && options.length > 0
-        ? options.map((o, i) => `${i+1}. ${o}`).join('\n')
-        : '';
-    
-    const prompt = `당신은 한국 자격증 시험 전문 튜터입니다. 다음 문제에 대해 핵심을 짚어주세요.
-
-[과목] ${subject || '미분류'}
-[문제] ${question}
-${optionsText ? `[보기]\n${optionsText}` : ''}
-[정답] ${correctAnswer}
-[내 답] ${myAnswer}
-[결과] ${isCorrect ? '✅ 정답' : '❌ 오답'}
-${explanation ? `[원본 해설] ${explanation}` : ''}
-
-다음 형식으로 답변해 주세요:
-${isCorrect 
-    ? '✅ 정답입니다!\n\n💡 핵심 개념:\n(이 문제의 핵심 개념을 2~3줄로 설명)\n\n🧠 기억 포인트:\n(시험에서 자주 출제되는 포인트 1~2가지)' 
-    : '❌ 오답 분석\n\n🔍 틀린 이유:\n(왜 내 답이 틀렸는지 구체적으로)\n\n✅ 정답인 이유:\n(정답이 맞는 이유를 쉽게)\n\n💡 핵심 개념:\n(반드시 기억할 핵심 2~3줄)\n\n🔄 혼동 주의:\n(비슷한 개념이나 자주 틀리는 함정)'
-}
-
-3~5문장으로 간결하고 실용적으로 작성해주세요.`;
-
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 600,
-            messages: [{ role: 'user', content: prompt }]
-        })
-    });
-
-    if(!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.error?.message || `API 오류 (${response.status})`);
-    }
-
-    const data = await response.json();
-    return data.content[0]?.text || '';
-}
+// ====== Claude AI 기능 (Lite: 비활성화) ======
+async function callClaudeAI() { return null; }
 
 async function fetchAndDisplayAiExplanation(q) {
-    if(!isAIMode) return;
-    const apiKey = localStorage.getItem('claudeApiKey');
-    // API 키 없으면 실시간 호출 안 함 — JSON의 ai_tip이 그대로 표시됨
-    if(!apiKey) return;
-
-    const loadingEl = document.getElementById('aiLoadingIndicator');
-    const tipEl = document.getElementById('quizTipText');
-    const aiSection = document.getElementById('aiTutorSection');
-
-    // 이미 실시간 AI 답변이 있으면 스킵 (ai_realtime_tip 플래그)
-    if(q._ai_realtime_fetched) return;
-
+    // Lite: AI 기능 비활성화
+    return;
+}
+// ====== Lite: 아래 원본 AI 코드는 주석 처리됨 ======
+/*
     aiSection.style.display = 'block';
     loadingEl.style.display = 'block';
     tipEl.style.opacity = '0.4';
-
-    try {
-        const aiText = await callClaudeAI(
-            q.question, q.options, q.answer, q.my_ans,
-            q.subject, q.original_explanation
-        );
-        if(aiText) {
-            q._ai_realtime_fetched = true;
-            q._ai_realtime_text = aiText;
-            tipEl.innerHTML = aiText.replace(/\n/g, '<br>');
-            tipEl.style.opacity = '1';
-        }
-    } catch(e) {
-        console.error('Claude API 오류:', e);
-        tipEl.innerHTML = `⚠️ AI 해설 오류: ${e.message}<br><small>API 키 또는 네트워크를 확인해주세요.</small>`;
-        tipEl.style.opacity = '1';
-        showToast('⚠️ AI 해설 오류: ' + e.message, 'warning');
-    } finally {
-        loadingEl.style.display = 'none';
-    }
-}
-
-function initClaudeApiKeyUI() {
-    const apiKey = localStorage.getItem('claudeApiKey');
-    const statusEl = document.getElementById('apiKeyStatus');
-    if(statusEl) {
-        if(apiKey) {
-            statusEl.innerHTML = '🔐 API 키가 설정되어 있습니다. 새로 입력하면 덮어씁니다.';
-        }
-    }
-    const autoToggle = document.getElementById('autoAiOnWrongToggle');
-    if(autoToggle) {
-        autoToggle.checked = localStorage.getItem('autoAiOnWrong') === 'true';
-    }
-}
+    ... (원본 AI 코드 생략)
+*/
+// ====== Lite: AI 관련 함수들 비활성화 ======
+function initClaudeApiKeyUI() { /* Lite */ }
+function saveClaudeApiKey() { /* Lite */ }
+function handleAutoAiToggle() { /* Lite */ }
 
 function handleAutoNextToggle() {
     autoNextEnabled = document.getElementById('autoNextToggle').checked;
@@ -5527,92 +5437,10 @@ function retryCurrentQuestion() {
 /* ============================================================
    HEATMAP
 ============================================================ */
-function trackDailyActivity() {
-    heatmapData[todayStr]=(heatmapData[todayStr]||0)+1;
-    const cutoff=new Date(); cutoff.setDate(cutoff.getDate()-90);
-    const cutoffStr=cutoff.toISOString().slice(0,10);
-    Object.keys(heatmapData).forEach(k=>{ if(k<cutoffStr) delete heatmapData[k]; });
-    localStorage.setItem('heatmap_v50',JSON.stringify(heatmapData));
-}
-function renderMetacogDashboard() {
-    const el = document.getElementById('metacogContent');
-    if(!el) return;
-    const s = metacogStats;
-    const total = Object.values(s).reduce((a,b)=>a+b,0);
-    if(total === 0) {
-        el.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-muted)">
-            <div style="font-size:2.5em;margin-bottom:8px">🧠</div>
-            <div style="font-weight:700;margin-bottom:4px">아직 데이터가 없어요</div>
-            <div style="font-size:0.88em">사전 확신도를 입력하면서 문제를 풀어보세요!</div>
-        </div>`;
-        return;
-    }
-    const sureTotal = s.sureRight + s.sureWrong;
-    const unsureTotal = s.unsureRight + s.unsureWrong;
-    const guessTotal = s.guessRight + s.guessWrong;
-    const sureRate = sureTotal ? Math.round(s.sureRight/sureTotal*100) : 0;
-    const unsureRate = unsureTotal ? Math.round(s.unsureRight/unsureTotal*100) : 0;
-    const guessRate = guessTotal ? Math.round(s.guessRight/guessTotal*100) : 0;
-    // 메타인지 정확도: 확신과 실제 결과의 일치도
-    const metacogScore = sureTotal >= 5
-        ? (sureRate >= 80 ? '🟢 우수' : sureRate >= 60 ? '🟡 보통' : '🔴 개선 필요')
-        : '📊 데이터 수집 중';
-    el.innerHTML = `
-        <div style="padding:14px;background:linear-gradient(135deg,#1E1B4B,#2D1B69);border-radius:16px;color:white;margin-bottom:12px">
-            <div style="font-size:0.78em;opacity:0.8;margin-bottom:4px">메타인지 정확도</div>
-            <div style="font-size:1.4em;font-weight:900">${metacogScore}</div>
-            <div style="font-size:0.75em;opacity:0.7;margin-top:4px">확신할 때 실제 정답률: <b>${sureRate}%</b></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-            ${[
-                {label:'✅ 확실', right:s.sureRight, wrong:s.sureWrong, color:'#10B981'},
-                {label:'🤔 애매', right:s.unsureRight, wrong:s.unsureWrong, color:'#F59E0B'},
-                {label:'😅 모름', right:s.guessRight, wrong:s.guessWrong, color:'#EF4444'}
-            ].map(item => {
-                const t = item.right + item.wrong;
-                const rate = t ? Math.round(item.right/t*100) : 0;
-                return `<div style="background:var(--bg);border-radius:14px;padding:12px 8px;text-align:center">
-                    <div style="font-size:0.8em;font-weight:700;margin-bottom:4px">${item.label}</div>
-                    <div style="font-size:1.5em;font-weight:900;color:${item.color}">${rate}%</div>
-                    <div style="font-size:0.72em;color:var(--text-muted);margin-top:2px">${item.right}정 / ${item.wrong}오</div>
-                </div>`;
-            }).join('')}
-        </div>
-        ${s.sureWrong >= 3 ? `<div style="background:var(--danger-light);border-radius:12px;padding:12px 14px;border-left:3px solid var(--danger)">
-            <div style="font-size:0.85em;font-weight:800;color:var(--danger);margin-bottom:4px">⚠️ 주의: 확신 오답 ${s.sureWrong}회</div>
-            <div style="font-size:0.78em;color:var(--text-sub)">확신했는데 틀린 문제들을 집중 복습하세요. 잘못된 개념 이해가 고착될 수 있습니다.</div>
-        </div>` : ''}
-        <div style="margin-top:12px;font-size:0.78em;color:var(--text-muted);text-align:center">총 ${total}문제 분석 완료</div>
-    `;
-}
+function trackDailyActivity() { /* Lite */ }
+function renderMetacogDashboard() { /* Lite */ }
 
-function renderHeatmap() {
-    const grid=document.getElementById('heatmapGrid'); grid.innerHTML='';
-    const days=35, today=new Date(), cells=[];
-    for(let i=days-1;i>=0;i--){ const d=new Date(today); d.setDate(today.getDate()-i); cells.push(d.toISOString().slice(0,10)); }
-    const firstDay=new Date(cells[0]).getDay();
-    for(let i=0;i<firstDay;i++){ const pad=document.createElement('div'); pad.style.aspectRatio='1'; grid.appendChild(pad); }
-    let totalDays=0,totalQ=0,maxStreak=0,curStreak=0;
-    cells.forEach(dateStr=>{
-        const count=heatmapData[dateStr]||0;
-        const cell=document.createElement('div'); cell.className='heatmap-cell';
-        if(count>=30) cell.classList.add('lv4');
-        else if(count>=15) cell.classList.add('lv3');
-        else if(count>=5) cell.classList.add('lv2');
-        else if(count>=1) cell.classList.add('lv1');
-        if(dateStr===todayStr) cell.classList.add('today');
-        cell.title=`${dateStr}: ${count}문제`;
-        if(count>0){ totalDays++; totalQ+=count; curStreak++; maxStreak=Math.max(maxStreak,curStreak); }
-        else curStreak=0;
-        grid.appendChild(cell);
-    });
-    const avgQ=totalDays>0?Math.round(totalQ/totalDays):0;
-    const todayCount=heatmapData[todayStr]||0;
-    document.getElementById('heatmapSummary').innerHTML=
-        `📅 최근 35일 중 <b>${totalDays}일</b> 학습 &nbsp;|&nbsp; 총 <b>${totalQ}문제</b><br>`+
-        `🔥 최고 연속 <b>${maxStreak}일</b> &nbsp;|&nbsp; 하루 평균 <b>${avgQ}문제</b><br>`+
-        `⚡ 오늘 <b>${todayCount}문제</b> 풀이 완료`;
-}
+function renderHeatmap() { /* Lite */ }
 
 /* ============================================================
    SESSION SUMMARY
@@ -6766,12 +6594,7 @@ function updateStatsUI() {
     document.getElementById('sessWrongTop').innerText=sessionTotal-sessionCorrect;
 }
 
-function addXP(n) {
-    userStats.xp+=n;
-    renderStreakWidget(); // C: 스트릭 실시간 업데이트
-    if(userStats.xp>=userStats.maxXp){ userStats.level++; userStats.xp=0; userStats.maxXp=Math.round(userStats.maxXp*1.2); document.getElementById('levelUpModal').style.display='flex'; document.getElementById('newLevelTitle').innerText='Lv.'+userStats.level+' — '+(TITLES[Math.min(userStats.level-1,TITLES.length-1)]); fireConfetti(true); }
-    updateStatsUI();
-}
+function addXP(n) { /* Lite */ }
 
 function renderKeywords(k) {
     ['quizKeywords','cardKeywords'].forEach(id=>{
@@ -6792,15 +6615,26 @@ document.getElementById('fileInput').onchange=function(e){
                 const data=JSON.parse(evt.target.result);
                 if(Array.isArray(data)){
                     const newTag=file.name.replace('.json','');
-                    data.forEach(q=>{ q.tag=newTag; if(!q.subject) q.subject='미분류(공통)'; q.isViewed=false; });
-                    bank=bank.concat(data);
+                    // 필수 필드 검증
+                    const valid = data.filter(q => q.question && q.answer);
+                    const invalid = data.length - valid.length;
+                    valid.forEach(q=>{
+                        q.tag=newTag;
+                        if(!q.subject) q.subject='미분류(공통)';
+                        if(!q.options) q.options=[];
+                        q.isViewed=false;
+                    });
+                    bank=bank.concat(valid);
                     activeTags.add(newTag);
-                    data.forEach(q=>activeSubjects.add(q.subject||'미분류(공통)'));
+                    valid.forEach(q=>activeSubjects.add(q.subject||'미분류(공통)'));
                     // VER.89: 분야 자동 감지
                     autoDetectFields();
                     renderFieldBar();
+                    const msg = invalid > 0 ? `✅ ${valid.length}개 추가 완료 (⚠️ ${invalid}개 필드 오류로 제외)` : '✅ 파일 추가 완료!';
+                    saveData(); applyFilter(); updateUI(); showToast(msg,'success');
+                } else {
+                    showToast('⚠️ JSON 형식 오류: 배열이어야 합니다.', 'warning');
                 }
-                saveData(); applyFilter(); updateUI(); showToast('✅ 파일 추가 완료!','success');
             }catch(e){ showToast('파일 형식 오류'); }
         };
         reader.readAsText(file);
@@ -7657,12 +7491,7 @@ function _toggleDashPanel_orig() {
 /* ============================================================
    VER.80 — DARK MODE
 ============================================================ */
-function toggleDarkMode() {
-    darkMode = !darkMode;
-    document.body.classList.toggle('dark-mode', darkMode);
-    document.getElementById('darkToggleBtn').innerText = darkMode ? '☀️' : '🌙';
-    localStorage.setItem('darkMode_v80', darkMode);
-}
+function toggleDarkMode() { /* Lite */ }
 
 /* ============================================================
    VER.80 — MEMORY STRENGTH
@@ -7702,29 +7531,10 @@ function renderMemStrength(q) {
 ============================================================ */
 
 /* 사전 확신도 설정 (답 고르기 전) */
-function setPreConf(level) {
-    preConfidence = level;
-    const wrap = document.getElementById('preConfWrap');
-    if(!wrap) return;
-    wrap.querySelectorAll('.pre-conf-btn').forEach(b => b.classList.remove('selected'));
-    const btn = wrap.querySelector('.pc-' + level);
-    if(btn) btn.classList.add('selected');
-    // 살짝 접기 (0.8초 후) — 방해 최소화
-    setTimeout(() => {
-        if(wrap) wrap.style.maxHeight = '0';
-        setTimeout(() => { if(wrap) { wrap.classList.remove('show'); wrap.style.maxHeight = ''; } }, 400);
-    }, 600);
-}
+function setPreConf(level) { /* Lite */ }
 
 /* 세션 진행바 업데이트 */
-function updateSessionProgressBar() {
-    const fill = document.getElementById('sessionProgressFill');
-    if(!fill) return;
-    const total = filteredIndices.length;
-    if(total === 0) { fill.style.width = '0%'; return; }
-    const answered = filteredIndices.filter(i => bank[i] && bank[i].my_status).length;
-    fill.style.width = Math.round(answered / total * 100) + '%';
-}
+function updateSessionProgressBar() { /* Lite */ }
 
 /* V160: 메모리 강도 바 렌더링 (도트 → 부드러운 바) */
 function renderMemStrengthV160(q) {
@@ -7827,61 +7637,19 @@ function rateConfidence(quality) {
 /* ============================================================
    VER.80 — WRONG ANSWER REFLECTION (메타인지)
 ============================================================ */
-function recordReflect(type) {
-    // type: misconception, careless, unknown
-    reflectData[type] = (reflectData[type] || 0) + 1;
-    localStorage.setItem('reflectData_v80', JSON.stringify(reflectData));
-
-    // Visual feedback
-    document.querySelectorAll('.reflect-btn').forEach(b => b.classList.remove('selected'));
-    event.target.closest('.reflect-btn').classList.add('selected');
-
-    const msgs = {
-        misconception: '📚 개념을 다시 정리해보세요. 해설을 꼼꼼히 읽어보세요.',
-        careless: '🎯 다음엔 더 꼼꼼히! 실수를 줄이는 연습을 해요.',
-        unknown: '💡 새로운 개념이에요! 반복 학습으로 익혀봐요.'
-    };
-    showToast(msgs[type]);
-
-    // Delay hiding (let user see the selection)
-    setTimeout(() => {
-        document.getElementById('reflectBox').classList.remove('show');
-    }, 1500);
-}
+function recordReflect(type) { /* Lite */ }
 
 /* ============================================================
    VER.80 — BRAIN BREAK
 ============================================================ */
-function showBrainBreak() {
-    const banner = document.getElementById('brainBreakBanner');
-    if(!banner) return;
-    brainBreakDismissed = false;
-    banner.classList.add('show');
-    try { if(navigator.vibrate) navigator.vibrate([50,50,50]); } catch(e) {}
-    // Auto dismiss after 8 seconds
-    setTimeout(() => { if(!brainBreakDismissed) dismissBrainBreak(); }, 8000);
-}
+function showBrainBreak() { /* Lite */ }
 
-function dismissBrainBreak() {
-    brainBreakDismissed = true;
-    continuousCount = 0; // reset after acknowledging
-    const banner = document.getElementById('brainBreakBanner');
-    if(banner) banner.classList.remove('show');
-}
+function dismissBrainBreak() { /* Lite */ }
 
 /* ============================================================
    VER.80 — INTERLEAVING
 ============================================================ */
-function handleInterleaveToggle() {
-    interleaveMode = document.getElementById('interleaveToggle').checked;
-    localStorage.setItem('interleaveMode_v80', interleaveMode);
-    applyFilter(); updateUI();
-    if(interleaveMode) {
-        showToast('🔀 인터리빙 ON — 과목이 혼합되며 기억 정착률이 높아집니다');
-    } else {
-        showToast('🔀 인터리빙 OFF');
-    }
-}
+function handleInterleaveToggle() { /* Lite */ }
 
 /* V160: 인터리빙 셔플 — 같은 과목 연속 3개 이상 방지 알고리즘 */
 function applyInterleaveShuffle(indices) {
@@ -8153,8 +7921,6 @@ function renderFieldStatsList() {
         </div>`;
     }).join('');
 }
-
-
 
 /* ============================================================
    CSV 내보내기 (오답 아카이브)
@@ -9471,8 +9237,6 @@ function recalcCardHeight() {
     if (cardContainer) cardContainer.style.height = containerH + 'px';
     if (cardInner)     cardInner.style.height      = containerH + 'px';
 }
-
-
 
 /* ============================================================
    🧠 장기기억 학습모드 v150 (LTM — Long-Term Memory)
