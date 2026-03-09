@@ -58,7 +58,7 @@
     --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
 
     /* ── 앱 너비 ── */
-    --app-max: 800px;
+    --app-max: 760px;
 
     /* ── 타이포그래피 ── */
     --fs-base: 16px;
@@ -201,6 +201,8 @@ input,textarea,button,select { font-family: inherit; }
     margin: 0 auto;
     padding-top: calc(var(--top-h) + var(--safe-top));
     padding-bottom: calc(var(--bottom-h) + var(--safe-bottom));
+    padding-left: 16px;
+    padding-right: 16px;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
@@ -1286,6 +1288,7 @@ body.dark-mode .quiz-surface { background: #2C2C2E; }
 body.dark-mode #card-interface { background: #1C1C1E; }
 body.dark-mode .card-front { background: #2C2C2E; border-color: #38383A; }
 body.dark-mode .card-back { background: #1C1C1E; border-color: #3A3A3C; }
+body.dark-mode #mockExamPlay { background: #1C1C1E; }
 body.dark-mode .main-wrap { background: #1C1C1E; }
 body.dark-mode .main-mode-tabs { background: #2C2C2E; border-color: #38383A; }
 body.dark-mode .exp-box { background: #1C1C1E; }
@@ -2546,8 +2549,10 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
 /* ── 퀴즈 서피스 Apple 카드 스타일 ── */
 .quiz-surface {
     background: var(--surface);
-    border-radius: 0;
+    border-radius: 16px;
     padding: 20px;
+    margin: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
 }
 
 /* ── 인라인 확인 버튼 Apple 스타일 ── */
@@ -4002,9 +4007,11 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
         </div>
 
         <!-- 시험 진행 화면 - 전체화면으로 변경 -->
-        <div id="mockExamPlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:1000;flex-direction:column">
-            <div style="padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface);padding-top:calc(12px + var(--safe-top))">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;max-width:var(--app-max);margin-left:auto;margin-right:auto">
+        <div id="mockExamPlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#F2F2F7;z-index:1000;flex-direction:column;align-items:stretch">
+            <div style="flex-shrink:0;position:relative;border-bottom:1px solid var(--border)">
+                <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:var(--surface);pointer-events:none"></div>
+                <div style="position:relative;padding:12px 24px;padding-top:calc(12px + var(--safe-top));max-width:var(--app-max);margin:0 auto">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
                     <span id="mockExamTitle" style="font-weight:800;font-size:1em">모의고사</span>
                     <div style="display:flex;align-items:center;gap:8px">
                         <span id="mockQuestionTimer" style="font-size:0.85em;color:var(--text-muted);font-weight:600;font-variant-numeric:tabular-nums">⏱ 0:00</span>
@@ -4013,24 +4020,26 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                         <button onclick="confirmExitMockExam()" style="padding:6px 12px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;font-size:0.85em;font-weight:600;cursor:pointer">나가기</button>
                     </div>
                 </div>
-                <div style="max-width:var(--app-max);margin-left:auto;margin-right:auto">
-                    <div style="display:flex;justify-content:space-between;font-size:0.85em;color:var(--text-sub);margin-bottom:8px">
-                        <span id="mockProgress">1 / 20</span>
-                        <span id="mockScore">✅0 ❌0</span>
-                    </div>
-                    <div style="height:6px;border-radius:4px;background:var(--border);overflow:hidden">
-                        <div id="mockProgressFill" style="height:100%;background:linear-gradient(90deg,var(--primary),#7C3AED);border-radius:4px;transition:width 0.3s;width:0%"></div>
-                    </div>
-                    <!-- 과목별 실시간 정답률 -->
-                    <div id="mockSubjectStats" style="display:none;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:0.78em"></div>
+                <div style="display:flex;justify-content:space-between;font-size:0.85em;color:var(--text-sub);margin-bottom:8px">
+                    <span id="mockProgress">1 / 20</span>
+                    <span id="mockScore">✅0 ❌0</span>
+                </div>
+                <div style="height:6px;border-radius:4px;background:var(--border);overflow:hidden">
+                    <div id="mockProgressFill" style="height:100%;background:linear-gradient(90deg,var(--primary),#7C3AED);border-radius:4px;transition:width 0.3s;width:0%"></div>
+                </div>
+                <!-- 과목별 실시간 정답률 -->
+                <div id="mockSubjectStats" style="display:none;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:0.78em"></div>
                 </div>
             </div>
-            <div id="mockQuizBody" style="-webkit-overflow-scrolling:touch;overflow-y:auto;flex:1;min-height:0;data-scrollable="1";padding:20px 16px;max-width:var(--app-max);margin:0 auto;width:100%;box-sizing:border-box"></div>
-            <div style="padding:14px 16px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;padding-bottom:calc(14px + var(--safe-bottom))">
-                <div style="display:flex;gap:10px;max-width:var(--app-max);margin:0 auto">
+            <div id="mockQuizBody" style="-webkit-overflow-scrolling:touch;overflow-y:auto;flex:1;min-height:0;padding:16px 24px;max-width:var(--app-max);margin:0 auto;box-sizing:border-box;align-self:stretch"></div>
+            <div style="flex-shrink:0;position:relative;border-top:1px solid var(--border)">
+                <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:var(--surface);pointer-events:none"></div>
+                <div style="position:relative;padding:14px 24px;padding-bottom:calc(14px + var(--safe-bottom));max-width:var(--app-max);margin:0 auto">
+                <div style="display:flex;gap:10px">
                     <button id="mockPrevBtn" onclick="prevMockQuestion()" style="padding:16px 14px;background:var(--bg);color:var(--text);border:1.5px solid var(--border);border-radius:14px;font-size:1em;font-weight:700;cursor:pointer;display:none">◀ 이전</button>
                     <button id="mockSubmitBtn" onclick="submitMockAnswer()" style="flex:1;padding:16px;background:linear-gradient(135deg,var(--primary),#7C3AED);color:#fff;border:none;border-radius:14px;font-size:1.05em;font-weight:700;cursor:pointer">정답 확인</button>
                     <button id="mockNextBtn" onclick="nextMockQuestion()" style="flex:1;padding:16px;background:var(--primary);color:#fff;border:none;border-radius:14px;font-size:1.05em;font-weight:700;cursor:pointer;display:none">다음 ▶</button>
+                </div>
                 </div>
             </div>
         </div>
@@ -8598,7 +8607,7 @@ function renderMockQuestion() {
         html+=_buildMockAnswerDetail(q);
     }
 
-    document.getElementById('mockQuizBody').innerHTML=html;
+    document.getElementById('mockQuizBody').innerHTML=`<div style="background:var(--surface);border-radius:16px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,0.07);width:100%;box-sizing:border-box">${html}</div>`;
     document.getElementById('mockQuizBody').scrollTop=0;
 }
 
