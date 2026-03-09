@@ -4221,6 +4221,7 @@ let bank = [], filteredIndices = [], currentIndex = 0;
 let isAIMode = false, isShuffleMode = false, currentFilter = 'all';
 let retrySet = new Set(), wrongArchive = [];
 let activeTags = new Set(), activeSubjects = new Set();
+let selectedWorkbookTags = null; // 문제집 선택 상태 보존용
 let consecutiveWrong = 0;
 let sessionCorrect = 0, sessionTotal = 0;
 
@@ -4541,7 +4542,7 @@ function restoreSessionState() {
             if(state.activeTags && state.activeTags.length > 0) {
                 // 저장된 태그 중 현재 bank에 존재하는 것만 복원
                 const validTags = state.activeTags.filter(t => allTags.has(t));
-                if(validTags.length > 0) activeTags = new Set(validTags);
+                if(validTags.length > 0) { activeTags = new Set(validTags); selectedWorkbookTags = new Set(validTags); }
             }
             if(state.activeSubjects && state.activeSubjects.length > 0) {
                 const validSubjects = state.activeSubjects.filter(s => allSubjects.has(s));
@@ -6417,8 +6418,11 @@ function deleteWorkbook(tagToRemove) {
 function checkAllWorkbooks(b) { document.querySelectorAll('#workbookList input').forEach(c=>c.checked=b); }
 function applyWorkbookSelection() {
     activeTags=new Set([...document.querySelectorAll('#workbookList input:checked')].map(c=>c.value));
+    selectedWorkbookTags = new Set(activeTags); // 문제집 선택 상태 보존
     activeSubjects=new Set(bank.filter(q=>activeTags.has(q.tag||'기타')).map(q=>q.subject||'미분류(공통)'));
+    activeField = 'all'; // 문제집 재선택 시 분야 필터 초기화
     autoDetectFields();
+    renderFieldBar();
     applyFilter(); updateUI(); document.getElementById('workbookModal').style.display='none'; showToast('문제집 필터가 적용되었습니다.');
 }
 
@@ -7760,9 +7764,9 @@ function getTagsForField(field) {
 function selectField(field) {
     activeField = field;
     if(field === 'all') {
-        activeTags = new Set(bank.map(q => q.tag || '기타'));
-        // 전체 분야로 돌아오면 모든 과목 활성
-        activeSubjects = new Set(bank.map(q => q.subject || '미분류(공통)'));
+        // 문제집 선택 상태로 복원 (없으면 전체)
+        activeTags = selectedWorkbookTags ? new Set(selectedWorkbookTags) : new Set(bank.map(q => q.tag || '기타'));
+        activeSubjects = new Set(bank.filter(q=>activeTags.has(q.tag||'기타')).map(q => q.subject || '미분류(공통)'));
     } else {
         const fieldTags = getTagsForField(field);
         if(fieldTags && fieldTags.size > 0) {
