@@ -4618,7 +4618,7 @@ function applyFilter() {
         if(!activeSubjects.has(q.subject||'미분류(공통)')) ok=false;
         // VER.89: 분야 필터
         if(activeField !== 'all') {
-            const qField = fieldMap[q.tag||'기타'];
+            const qField = fieldMap[q.tag||'기타'] || getAutoField(q.tag||'기타');
             if(qField !== activeField) ok=false;
         }
         if(currentFilter==='wrong' && q.my_status!=='wrong') ok=false;
@@ -6418,6 +6418,7 @@ function checkAllWorkbooks(b) { document.querySelectorAll('#workbookList input')
 function applyWorkbookSelection() {
     activeTags=new Set([...document.querySelectorAll('#workbookList input:checked')].map(c=>c.value));
     activeSubjects=new Set(bank.filter(q=>activeTags.has(q.tag||'기타')).map(q=>q.subject||'미분류(공통)'));
+    autoDetectFields();
     applyFilter(); updateUI(); document.getElementById('workbookModal').style.display='none'; showToast('문제집 필터가 적용되었습니다.');
 }
 
@@ -7787,7 +7788,9 @@ function selectField(field) {
 function renderFieldBar() {
     const bar = document.getElementById('fieldBar');
     if(!bar) return;
-    const usedFields = [...new Set(Object.values(fieldMap))].filter(f => FIELD_NAMES.includes(f));
+    const usedFields = [...new Set(
+        [...activeTags].map(t => fieldMap[t] || getAutoField(t)).filter(f => f && FIELD_NAMES.includes(f))
+    )];
 
     // fieldAll 칩 상태 갱신
     const fieldAllEl = document.getElementById('fieldAll');
@@ -7799,7 +7802,7 @@ function renderFieldBar() {
     // 분야 칩 동적 추가
     FIELD_NAMES.forEach(field => {
         if(usedFields.includes(field)) {
-            const count = bank.filter(q => fieldMap[q.tag||'기타'] === field).length;
+            const count = bank.filter(q => (fieldMap[q.tag||'기타'] || getAutoField(q.tag||'기타')) === field && activeTags.has(q.tag||'기타')).length;
             const isActive = activeField === field;
             const chip = document.createElement('div');
             chip.className = 'field-chip field-' + field + (isActive ? ' active' : '');
