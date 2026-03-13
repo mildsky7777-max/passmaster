@@ -240,41 +240,49 @@ input,textarea,button,select { font-family: inherit; }
     gap: 6px;
 }
 .nav-btn {
-    flex: 1;
-    height: 48px;
-    border: none;
-    border-radius: 14px;
-    font-size: 0.85em;
+    width: 44px; height: 44px;
+    flex-shrink: 0;
+    border: 1.5px solid var(--border);
+    border-radius: 50%;
+    font-size: 1em;
     font-weight: 700;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 0;
     -webkit-transition: 0.12s; transition: 0.12s;
     background: var(--bg);
     color: var(--text);
 }
-.nav-btn:active { -webkit-transform: scale(0.95); transform: scale(0.95); opacity: 0.8; }
+.nav-btn:active { -webkit-transform: scale(0.92); transform: scale(0.92); opacity: 0.8; }
 .nav-btn-primary {
+    flex: 1;
+    width: auto;
+    border-radius: 22px;
+    border: none;
     background: var(--primary);
     color: white;
-    flex: 2;
     font-size: 0.95em;
-    box-shadow: 0 4px 12px rgba(79,70,229,0.3);
+    font-weight: 800;
+    box-shadow: 0 4px 14px rgba(79,70,229,0.28);
+    height: 44px;
 }
-.nav-btn-icon { font-size: 1.1em; }
+.nav-btn-icon { font-size: 1em; }
 .nav-q-counter {
-    flex: 1.2;
+    font-size: 0.82em;
+    font-weight: 700;
+    color: var(--text-sub);
+    white-space: nowrap;
+    padding: 0 4px;
+    min-width: 44px;
     text-align: center;
-    padding: 8px;
-    background: var(--primary-light);
-    border-radius: 14px;
     cursor: pointer;
     -webkit-transition: 0.12s; transition: 0.12s;
+    display: flex; flex-direction: column; align-items: center;
 }
 .nav-q-counter:active { opacity: 0.75; }
-.nav-q-num { font-size: 1.1em; font-weight: 800; color: var(--primary); line-height: 1.2; }
+.nav-q-num { font-size: 1em; font-weight: 800; color: var(--primary); line-height: 1.2; }
 .nav-q-total { font-size: 0.65em; color: var(--text-sub); }
 
 /* ===== DAILY GOAL BAR ===== */
@@ -298,6 +306,35 @@ input,textarea,button,select { font-family: inherit; }
 
 /* ===== SETTINGS PANEL ===== */
 /* ===== SETTINGS BOTTOM SHEET ===== */
+
+/* ===== SETTINGS PANEL TABS (UI 개선) ===== */
+.settings-tab-nav {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    background: var(--surface);
+    padding: 0 14px;
+}
+.settings-tab-item {
+    flex: 1;
+    text-align: center;
+    padding: 10px 6px;
+    font-size: 0.85em;
+    font-weight: 700;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2.5px solid transparent;
+    margin-bottom: -1px;
+    -webkit-transition: 0.15s; transition: 0.15s;
+    white-space: nowrap;
+}
+.settings-tab-item.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+.settings-tab-pane { display: block; }
+body.dark-mode .settings-tab-nav { border-color: #38383A; }
+
 .sheet-overlay {
     display: none;
     position: fixed;
@@ -402,11 +439,11 @@ input,textarea,button,select { font-family: inherit; }
 .main-mode-tabs {
     display: flex;
     background: var(--surface);
-    padding: 6px 10px;
-    gap: 6px;
+    padding: 0 10px;
+    gap: 0;
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
-    align-items: center;
+    align-items: stretch;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
@@ -415,8 +452,8 @@ input,textarea,button,select { font-family: inherit; }
 .main-mode-tab {
     flex-shrink: 0;
     text-align: center;
-    padding: 7px 14px;
-    border-radius: 20px;
+    padding: 10px 16px;
+    border-radius: 0;
     font-weight: 700;
     font-size: 0.88em;
     color: var(--text-muted);
@@ -424,18 +461,25 @@ input,textarea,button,select { font-family: inherit; }
     -webkit-transition: 0.18s; transition: 0.18s;
     display: flex; align-items: center; gap: 5px;
     white-space: nowrap;
+    border-bottom: 2.5px solid transparent;
+    margin-bottom: -1px;
 }
 .main-mode-tab.active {
-    background: var(--primary);
-    color: white;
-    box-shadow: 0 2px 8px rgba(79,70,229,0.3);
+    background: transparent;
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    box-shadow: none;
 }
 /* 탭-필드 구분선 */
 .tab-divider {
     width: 1px; height: 20px;
     background: var(--border);
     flex-shrink: 0;
-    margin: 0 2px;
+    margin: auto 6px;
+}
+/* PC에서 분야칩 우측 정렬 */
+@media (min-width: 640px) {
+    .field-bar { margin-left: auto; }
 }
 
 /* settings-panel styles moved to bottom sheet section above */
@@ -1188,8 +1232,9 @@ input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary)
     .tag-pill, .subject-pill { font-size: 0.78em; padding: 3px 7px; }
 
     /* 하단 버튼 */
-    .nav-btn { font-size: 0.78em; height: 46px; }
-    .nav-btn-primary { font-size: 0.88em; }
+    .nav-btn { width: 48px; height: 48px; font-size: 1em; }
+    .nav-btn-primary { font-size: 0.95em; height: 48px; }
+    .bottom-nav { gap: 10px; padding-left: 20px; padding-right: 20px; }
 
     /* 메타 통계 바 */
     .cmeta-wrap { padding: 8px 12px; }
@@ -1836,7 +1881,9 @@ body { transition: background 0.3s, color 0.3s; }
 
 
 /* ===== COMPACT META ROWS (v92) ===== */
-.cmeta-wrap { margin-bottom: 10px; display: flex; flex-direction: column; gap: 5px; }
+.cmeta-wrap { margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
+/* cmeta-row2: 기억강도/타이머만 최소 표시 */
+#cmetaRow2 { min-height: 0; }
 /* 1행 */
 .cmeta-row1 { display: flex; align-items: flex-start; gap: 6px; min-width: 0; }
 .cmeta-pills {
@@ -2738,24 +2785,18 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
         <div class="quiz-surface" id="quizContent">
             <!-- ===== COMPACT META ROWS (v92) ===== -->
             <div class="cmeta-wrap" id="quizMeta">
-                <!-- 1행: 분야+문제집+과목+상태+키워드 / 북마크 -->
+                <!-- 통합 단일 행: 과목 + 기억강도 + 북마크 + 타이머 -->
                 <div class="cmeta-row1">
                     <div class="cmeta-pills">
+                        <!-- 분야/태그/난이도/모드는 숨김 — 탭바·필터로 이미 표시됨 -->
                         <span id="quizFieldPill" class="field-pill f-기타" style="display:none"></span>
-                        <span id="quizTag" class="tag-pill">태그</span>
+                        <span id="quizTag" class="tag-pill" style="display:none">태그</span>
                         <span id="quizSubject" class="subject-pill">과목</span>
                         <span id="quizDiffBadge" class="q-diff-badge" style="display:none"></span>
                         <span id="modeStatusBadge" class="mode-pill" onclick="if(document.getElementById('modeStatusBadge').innerText.includes('플랜')) endPlanMode()" style="cursor:pointer"></span>
-                        <div id="quizKeywords" class="cmeta-keywords"></div>
-                    </div>
-                    <button class="bookmark-btn" id="quizBookmark" onclick="toggleBookmark()">☆</button>
-                </div>
-                <!-- 2행: 통계 + 기억강도 + 인터리빙 / 타이머 / 제한시간링 -->
-                <div class="cmeta-row2" id="cmetaRow2">
-                    <div class="cmeta-left2">
-                        <div class="q-stats-bar no-select" id="qStatsBar"></div>
-                        <span id="avgTimeBadge" style="display:none;font-size:0.72em;padding:2px 7px;border-radius:8px;font-weight:700;background:var(--bg);color:var(--text-muted)">⏱️</span>
-                        <div class="mem-strength" id="memStrength">
+                        <div id="quizKeywords" class="cmeta-keywords" style="display:none"></div>
+                        <!-- 기억강도 도트 (row2에서 이동) -->
+                        <div class="mem-strength" id="memStrength" style="margin-left:6px">
                             <div class="mem-dots" id="memDots">
                                 <div class="mem-dot" id="md0"></div>
                                 <div class="mem-dot" id="md1"></div>
@@ -2763,14 +2804,11 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                                 <div class="mem-dot" id="md3"></div>
                                 <div class="mem-dot" id="md4"></div>
                             </div>
-                            <span class="mem-label-text lv0" id="memLabel">새 문제</span>
-                            <span class="interleave-badge" id="interleaveBadge">🔀 인터리빙</span>
+                            <span class="mem-label-text lv0" id="memLabel" style="font-size:0.75em"></span>
                         </div>
-                        <!-- v147: 다음 복습일 표시 -->
-                        <span class="mem-next-review" id="memNextReview" style="display:none">📅</span>
                     </div>
-                    <div class="cmeta-right2">
-                        <div class="q-timer-badge" id="qTimerBadge">⏳ <span id="qTimerText">0초</span></div>
+                    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+                        <div class="q-timer-badge" id="qTimerBadge" style="font-size:0.75em">⏳ <span id="qTimerText">0초</span></div>
                         <div class="timelimit-ring-wrap" id="timeLimitWrap">
                             <svg class="timelimit-ring-svg" width="36" height="36" viewBox="0 0 44 44">
                                 <circle cx="22" cy="22" r="18" fill="none" stroke="var(--border)" stroke-width="4"/>
@@ -2783,7 +2821,18 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                                 <div class="timelimit-label">초</div>
                             </div>
                         </div>
+                        <button class="bookmark-btn" id="quizBookmark" onclick="toggleBookmark()">☆</button>
                     </div>
+                </div>
+                <!-- 통계/인터리빙/복습일: 숨김 (JS 호환 유지용) -->
+                <div class="cmeta-row2" id="cmetaRow2" style="display:none">
+                    <div class="cmeta-left2">
+                        <div class="q-stats-bar no-select" id="qStatsBar"></div>
+                        <span id="avgTimeBadge" style="display:none"></span>
+                        <span class="interleave-badge" id="interleaveBadge" style="display:none">🔀 인터리빙</span>
+                        <span class="mem-next-review" id="memNextReview" style="display:none">📅</span>
+                    </div>
+                    <div class="cmeta-right2"></div>
                 </div>
             </div>
             <div class="q-text" id="quizQuestion">문제를 불러오세요.</div>
@@ -2995,8 +3044,15 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
             <div class="sheet-grip"></div>
         </div>
         <div class="sheet-header-visible">
-            <span class="sheet-title">🎓 학습 설정</span>
+            <span class="sheet-title">🎓 합격마스터</span>
             <button class="sheet-close-btn" onclick="closeSettingsSheet()">✕</button>
+        </div>
+        <!-- 설정 탭 네비 -->
+        <div class="settings-tab-nav no-select" id="settingsTabNav">
+            <div class="settings-tab-item active" id="stab-study" onclick="switchSettingsTab('study')">학습</div>
+            <div class="settings-tab-item" id="stab-stats" onclick="switchSettingsTab('stats')">현황</div>
+            <div class="settings-tab-item" id="stab-config" onclick="switchSettingsTab('config')">설정</div>
+            <div class="settings-tab-item" id="stab-manage" onclick="switchSettingsTab('manage')">관리</div>
         </div>
 
         <!-- Original header (hidden, kept for JS compatibility) -->
@@ -3012,6 +3068,19 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
         </div>
 
         <div class="settings-body" id="settingsBody">
+
+            <!-- ===== 학습 탭 ===== -->
+            <div class="settings-tab-pane" id="stab-pane-study">
+
+            <!-- 🚀 빠른 실행 그리드 -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+                <button class="s-btn" onclick="openMockExam();closeSettingsSheet()" style="height:52px;background:linear-gradient(135deg,#7C3AED,#4F46E5);color:white;border-radius:14px;font-size:0.88em;font-weight:800;flex-direction:row;gap:8px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(124,58,237,0.25)">
+                    <span style="font-size:1.2em">📝</span>모의고사
+                </button>
+                <button class="s-btn" onclick="startLTMReview();closeSettingsSheet()" style="height:52px;background:linear-gradient(135deg,#0EA5E9,#4F46E5);color:white;border-radius:14px;font-size:0.88em;font-weight:800;flex-direction:row;gap:8px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(14,165,233,0.25)">
+                    <span style="font-size:1.2em">🧠</span>오늘 복습
+                </button>
+            </div>
 
             <!-- ① 검색 -->
             <input type="text" id="searchInput" class="search-bar" placeholder="🔍 문제 / 해설 / 메모 / 과목 검색" oninput="handleSearch()">
@@ -3040,6 +3109,11 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                 <button class="chip chip-review"  id="btnReview"   onclick="toggleFilter('review')">📅 복습<span class="chip-badge" id="badgeReview" style="display:none"></span></button>
                 <button class="chip chip-retry"   id="btnRetryMode" onclick="toggleFilter('retry')" style="display:none">🔄 재도전<span class="chip-badge" id="badgeRetry" style="display:none"></span></button>
             </div>
+
+            </div><!-- /stab-pane-study -->
+
+            <!-- ===== 현황 탭 ===== -->
+            <div class="settings-tab-pane" id="stab-pane-stats" style="display:none">
 
             <!-- ④ 오늘 현황 카드 (스트릭 + 목표 + 통계 통합) -->
             <!-- 🎯 Smart Study Recommendation (v147) -->
@@ -3198,6 +3272,11 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
 
             <hr class="section-divider">
 
+            </div><!-- /stab-pane-stats -->
+
+            <!-- ===== 설정 탭 ===== -->
+            <div class="settings-tab-pane" id="stab-pane-config" style="display:none">
+
             <!-- ⑥ 학습 설정 (자주 쓰는 토글들) -->
             <div style="margin-bottom:12px">
                 <div class="section-label">학습 설정</div>
@@ -3210,6 +3289,9 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                     </button>
                     <button id="btnFocusMode" class="s-btn" onclick="toggleFocusMode()">
                         <span class="s-btn-icon">🎯</span>집중 모드
+                    </button>
+                    <button class="s-btn" onclick="openOMRModal()">
+                        <span class="s-btn-icon">📋</span>OMR
                     </button>
                 </div>
                 <div class="setting-row">
@@ -3242,24 +3324,14 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                 </div>
             </div>
 
-            <hr class="section-divider">
+            </div><!-- /stab-pane-config -->
 
-            <!-- 모의고사 (위로 분리) -->
-            <div style="margin-bottom:12px">
-                <button class="s-btn" onclick="openMockExam()" style="width:100%;height:56px;background:linear-gradient(135deg,#7C3AED,#4F46E5);color:white;font-size:0.95em;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:14px;border:none;cursor:pointer;box-shadow:0 4px 12px rgba(124,58,237,0.3)">
-                    <span style="font-size:1.3em">📝</span>
-                    <span>모의고사 시작</span>
-                </button>
-            </div>
+            <!-- ===== 관리 탭 ===== -->
+            <div class="settings-tab-pane" id="stab-pane-manage" style="display:none">
 
-            <hr class="section-divider">
-
-            <!-- ⑦ 더보기 (접기/펼치기) — 가끔 쓰는 것들 -->
+            <!-- ⑦ 관리 메뉴 -->
             <div id="morePanel">
-                <button onclick="toggleMorePanel()" id="morePanelBtn" style="width:100%;padding:10px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;font-size:0.85em;font-weight:700;color:var(--text-sub);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:0">
-                    ⚙️ 더보기 <span id="morePanelIcon">▼</span>
-                </button>
-                <div id="morePanelBody" style="display:none;margin-top:10px">
+                <div id="morePanelBody" style="display:block;margin-top:0">
                     <!-- 범위 선택 -->
                     <div style="margin-bottom:12px">
                         <div class="section-label">범위 선택</div>
@@ -3356,6 +3428,7 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
 
             <input type="file" id="fileInput" accept=".json" style="display:none" multiple>
             <input type="file" id="restoreInput" accept=".json" style="display:none">
+            </div><!-- /stab-pane-manage -->
         </div>
     </div>
 
@@ -3395,22 +3468,8 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
 
 <!-- ===== FIXED BOTTOM NAV ===== -->
 <div class="bottom-nav no-select" id="bottomNav">
-    <button class="nav-btn" id="navPrev" onclick="moveIndex(-1)">
-        <span class="nav-btn-icon">←</span> 이전
-    </button>
-    <button class="nav-btn" onclick="toggleSettings()">
-        <span class="nav-btn-icon">☰</span>
-    </button>
-
-    <!-- 집중모드 버튼 (퀴즈+카드 공통) -->
-    <button class="nav-btn" id="navFocusBtn" onclick="toggleFocusMode()" title="집중모드">
-        <span id="navFocusBtnIcon">🙈</span>
-        <span id="navFocusBtnLabel">집중</span>
-    </button>
-
-    <!-- OMR 버튼 (퀴즈+카드 공통) -->
-    <button class="nav-btn" id="navOmrBtn" onclick="openOMRModal()" title="OMR 답안지">
-        <span class="nav-btn-icon">📋</span>
+    <button class="nav-btn" id="navPrev" onclick="moveIndex(-1)" title="이전">
+        ←
     </button>
 
     <div class="nav-q-counter" id="navQCounter" onclick="openJumpModal()">
@@ -3423,10 +3482,17 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
         ✓ 확인
     </button>
 
-    <button class="nav-btn" onclick="moveIndex(1)" id="navNext">
-        다음 <span class="nav-btn-icon">→</span>
+    <button class="nav-btn" onclick="toggleSettings()" title="메뉴">
+        ☰
+    </button>
+
+    <button class="nav-btn" onclick="moveIndex(1)" id="navNext" title="다음">
+        →
     </button>
 </div>
+<!-- 집중/OMR 버튼: 기존 레이아웃 호환용 숨김 처리 -->
+<button id="navFocusBtn" onclick="toggleFocusMode()" style="display:none"><span id="navFocusBtnIcon">🙈</span><span id="navFocusBtnLabel"></span></button>
+<button id="navOmrBtn" onclick="openOMRModal()" style="display:none"></button>
 
 <!-- ===== MODALS ===== -->
 
@@ -4370,9 +4436,24 @@ function renderAllMath() {
 
 window.onload = function() {
     const savedData = localStorage.getItem('quizData_v50');
-    if(savedData) bank = JSON.parse(savedData);
+    if(savedData) {
+        try {
+            bank = JSON.parse(savedData);
+        } catch(e) {
+            console.error('quizData 파싱 실패:', e);
+            bank = [];
+            showToast('⚠️ 저장 데이터가 손상되었습니다. 백업에서 복원해주세요.', 'warning');
+        }
+    }
     const savedStats = localStorage.getItem('userStats_v50');
-    if(savedStats) userStats = JSON.parse(savedStats);
+    if(savedStats) {
+        try {
+            userStats = JSON.parse(savedStats);
+        } catch(e) {
+            console.error('userStats 파싱 실패:', e);
+            userStats = { level:1, xp:0, maxXp:100, streak:0, totalSolved:0 };
+        }
+    }
     const savedArchive = localStorage.getItem('wrongArchive_v50');
     if(savedArchive) try{ wrongArchive=JSON.parse(savedArchive); }catch(e){ wrongArchive=[]; }
     // fromMock 필드 마이그레이션: 없는 항목은 false로 초기화
@@ -4880,9 +4961,9 @@ function updateUI() {
     const cardSummaryBox = document.getElementById('cardSummaryBox');
     const cardSummaryText = document.getElementById('cardSummaryText');
     if(q.summary) {
-        if(quizSummaryText) quizSummaryText.innerText = q.summary;
+        if(quizSummaryText) { quizSummaryText.innerText = q.summary; renderMath(quizSummaryText); }
         if(quizSummaryBox) quizSummaryBox.style.display = 'flex';
-        if(cardSummaryText) cardSummaryText.innerText = q.summary;
+        if(cardSummaryText) { cardSummaryText.innerText = q.summary; renderMath(cardSummaryText); }
         if(cardSummaryBox) cardSummaryBox.style.display = 'flex';
     } else {
         if(quizSummaryBox) quizSummaryBox.style.display = 'none';
@@ -4937,6 +5018,8 @@ function updateUI() {
    CONTROLS
 ============================================================ */
 function openSettingsSheet() {
+    // 설정 패널 열릴 때 기본 탭 = 학습
+    if(typeof switchSettingsTab === 'function') switchSettingsTab('study');
     const scrollbarW = window.innerWidth - document.documentElement.clientWidth;
     if(scrollbarW > 0) document.body.style.paddingRight = scrollbarW + 'px';
     document.getElementById('settingsSheet').classList.add('sheet-open');
@@ -6595,8 +6678,23 @@ function switchDashTab(tab) {
 ============================================================ */
 // 로컬 저장만 (내부용)
 function saveDataLocal() {
-    localStorage.setItem('quizData_v50', JSON.stringify(bank));
-    localStorage.setItem('userStats_v50', JSON.stringify(userStats));
+    try {
+        const bankStr = JSON.stringify(bank);
+        const statsStr = JSON.stringify(userStats);
+        // 저장 전 용량 경고 (4MB 초과 시)
+        const totalBytes = (bankStr.length + statsStr.length) * 2;
+        if(totalBytes > 4 * 1024 * 1024) {
+            showToast('⚠️ 저장 공간이 4MB를 초과했습니다. 백업 후 일부 문제집을 삭제해주세요.', 'warning');
+        }
+        localStorage.setItem('quizData_v50', bankStr);
+        localStorage.setItem('userStats_v50', statsStr);
+    } catch(e) {
+        if(e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+            showToast('❌ 저장 공간이 가득 찼습니다! 백업 후 일부 문제집을 삭제해주세요.', 'warning');
+        } else {
+            console.error('saveDataLocal 오류:', e);
+        }
+    }
 }
 
 // V160: 디바운스 배치 저장 — 연속 호출 시 마지막 호출만 실행 (성능 최적화)
@@ -6653,20 +6751,36 @@ document.getElementById('fileInput').onchange=function(e){
                     // 필수 필드 검증
                     const valid = data.filter(q => q.question && q.answer);
                     const invalid = data.length - valid.length;
-                    valid.forEach(q=>{
-                        q.tag=newTag;
-                        if(!q.subject) q.subject='미분류(공통)';
-                        if(!q.options) q.options=[];
-                        q.isViewed=false;
-                    });
-                    bank=bank.concat(valid);
-                    activeTags.add(newTag);
-                    valid.forEach(q=>activeSubjects.add(q.subject||'미분류(공통)'));
-                    // VER.89: 분야 자동 감지
-                    autoDetectFields();
-                    renderFieldBar();
-                    const msg = invalid > 0 ? `✅ ${valid.length}개 추가 완료 (⚠️ ${invalid}개 필드 오류로 제외)` : '✅ 파일 추가 완료!';
-                    saveData(); applyFilter(); updateUI(); showToast(msg,'success');
+
+                    // ── 중복 로드 방지: 같은 tag가 이미 있으면 확인 후 덮어쓰기 ──
+                    const isDuplicate = bank.some(q => q.tag === newTag);
+                    const doLoad = (overwrite) => {
+                        if(overwrite) bank = bank.filter(q => q.tag !== newTag);
+                        valid.forEach(q=>{
+                            q.tag=newTag;
+                            if(!q.subject) q.subject='미분류(공통)';
+                            if(!q.options) q.options=[];
+                            // isViewed는 새 문제만 초기화 (기존 읽음 기록 보존)
+                            if(q.isViewed === undefined) q.isViewed = false;
+                        });
+                        bank=bank.concat(valid);
+                        activeTags.add(newTag);
+                        valid.forEach(q=>activeSubjects.add(q.subject||'미분류(공통)'));
+                        autoDetectFields();
+                        renderFieldBar();
+                        const msg = invalid > 0 ? `✅ ${valid.length}개 추가 완료 (⚠️ ${invalid}개 필드 오류로 제외)` : (overwrite ? `🔄 "${newTag}" 교체 완료! ${valid.length}개` : `✅ 파일 추가 완료! ${valid.length}개`);
+                        saveData(); applyFilter(); updateUI(); showToast(msg,'success');
+                    };
+
+                    if(isDuplicate) {
+                        showConfirm(
+                            `⚠️ "${newTag}"은 이미 로드되어 있습니다.\n기존 데이터(풀이 기록 포함)를 덮어쓰고 새로 불러올까요?`,
+                            () => doLoad(true),
+                            () => showToast('취소했습니다.')
+                        );
+                    } else {
+                        doLoad(false);
+                    }
                 } else {
                     showToast('⚠️ JSON 형식 오류: 배열이어야 합니다.', 'warning');
                 }
@@ -7050,6 +7164,19 @@ function startPlan(type) {
 function scrollToPanel() { closeSettingsSheet(); }
 
 /* 더보기 패널 토글 */
+
+// ===== UI 개선: 설정 패널 탭 전환 =====
+function switchSettingsTab(tab) {
+    const tabs = ['study','stats','config','manage'];
+    tabs.forEach(t => {
+        const item = document.getElementById('stab-' + t);
+        const pane = document.getElementById('stab-pane-' + t);
+        if(item) item.classList.toggle('active', t === tab);
+        if(pane) pane.style.display = (t === tab) ? 'block' : 'none';
+    });
+}
+
+
 let morePanelOpen = false;
 function toggleMorePanel() {
     morePanelOpen = !morePanelOpen;
@@ -11108,12 +11235,9 @@ function updateMasteryProgress() {
 // 기존 updateUI 끝에 새 기능 호출 추가
 const _origUpdateUI = typeof updateUI === 'function' ? updateUI : null;
 
-// updateUI 호출 시 Active Recall 적용 (MutationObserver로 감지)
-const _arObserver = new MutationObserver(() => {
-    if(activeRecallMode) {
-        requestAnimationFrame(applyActiveRecall);
-    }
-});
+// Active Recall은 updateUI 패치에서 직접 호출하므로 MutationObserver 불필요
+// (MutationObserver는 disconnect 없이 앱 전체 생명주기 동안 발화 → 제거)
+const _arObserver = { observe: () => {}, disconnect: () => {} }; // no-op stub
 
 // 기존 renderMiniDashboard 확장
 const _origRenderMiniDashboard = typeof renderMiniDashboard === 'function' ? renderMiniDashboard : null;
