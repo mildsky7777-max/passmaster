@@ -709,7 +709,7 @@ body.dark-mode .settings-tab-nav { border-color: #38383A; }
     border: 1.5px solid var(--border);
     border-radius: 14px;
     cursor: pointer;
-    display: flex; align-items: flex-start; gap: 10px;
+    display: flex; align-items: center; gap: 10px;
     -webkit-transition: all 0.18s var(--spring); transition: all 0.18s var(--spring);
     background: var(--surface);
     font-size: var(--fs-option);
@@ -729,7 +729,7 @@ body.dark-mode .settings-tab-nav { border-color: #38383A; }
     background: var(--bg); color: var(--text-sub);
     font-size: 0.82em; font-weight: 800;
     display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; margin-top: 1px;
+    flex-shrink: 0; align-self: flex-start; margin-top: 3px;
 }
 .option-item.sel    .opt-num { background: var(--primary); color: white; }
 .option-item.correct .opt-num { background: var(--success); color: white; }
@@ -2861,6 +2861,13 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                 🧠 먼저 머릿속으로 정답을 떠올려보세요...<br>
                 <span style="font-size:0.85em;opacity:0.7">능동적 회상은 기억력을 3배 높입니다</span>
             </div>
+            <!-- 📝 메모 (문제마다 항상 접근 가능) -->
+            <div id="quizMemoWrap" style="margin-bottom:8px">
+                <button onclick="toggleMemoInput()" id="memoToggleBtn" style="background:none;border:none;font-size:0.82em;color:var(--text-muted);cursor:pointer;padding:2px 0;display:flex;align-items:center;gap:5px;font-weight:600">
+                    📝 <span id="memoToggleLabel">메모 추가</span>
+                </button>
+                <textarea class="memo-input" id="quizMemo" rows="2" placeholder="이 문제에 대한 나만의 메모..." onchange="saveMemo()" style="display:none;margin-top:6px"></textarea>
+            </div>
             <div id="arOptionsWrap" class="ar-cover">
                 <div id="quizOptionsList" class="options-list no-select"></div>
             </div>
@@ -2893,7 +2900,6 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                     <button class="exp-toggle-btn" id="btnQuizExp" onclick="toggleOriginalExp('quiz')">📖 상세 해설 보기 ▼</button>
                     <div id="quizOriginalExp" class="orig-exp hidden"></div>
                 </div>
-                <textarea class="memo-input" id="quizMemo" rows="2" placeholder="나만의 메모..." onchange="saveMemo()"></textarea>
                 <button class="retry-btn hidden" id="btnRetry" onclick="retryCurrentQuestion()">🔄 다시 풀기 (기억 강화)</button>
                 <!-- Auto-next bar -->
                 <div class="auto-next-bar" id="autoNextBar">
@@ -3109,6 +3115,13 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                 <button class="chip chip-review"  id="btnReview"   onclick="toggleFilter('review')">📅 복습<span class="chip-badge" id="badgeReview" style="display:none"></span></button>
                 <button class="chip chip-retry"   id="btnRetryMode" onclick="toggleFilter('retry')" style="display:none">🔄 재도전<span class="chip-badge" id="badgeRetry" style="display:none"></span></button>
             </div>
+            <!-- 오답 원인 필터 (reflectType 데이터 있을 때만 표시) -->
+            <div id="reflectFilterRow" style="display:none;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+                <span style="font-size:0.75em;color:var(--text-muted);font-weight:700;align-self:center">오답원인:</span>
+                <button class="chip chip-wrong" id="btnReflectMisconception" onclick="toggleFilter('reflect-misconception')" style="background:#FEE2E2;color:#991B1B">🔴 개념 오해<span class="chip-badge" id="badgeReflectMisconception" style="display:none"></span></button>
+                <button class="chip chip-book"  id="btnReflectCareless"      onclick="toggleFilter('reflect-careless')" style="background:#FEF3C7;color:#92400E">🟡 실수<span class="chip-badge" id="badgeReflectCareless" style="display:none"></span></button>
+                <button class="chip"            id="btnReflectUnknown"       onclick="toggleFilter('reflect-unknown')" style="background:var(--bg);color:var(--text-sub);border:1.5px solid var(--border)">⚪ 처음 봄<span class="chip-badge" id="badgeReflectUnknown" style="display:none"></span></button>
+            </div>
 
             </div><!-- /stab-pane-study -->
 
@@ -3304,6 +3317,16 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                         <div class="toggle-track"><div class="toggle-thumb"></div></div>
                     </label>
                 </div>
+                <div class="setting-row">
+                    <div>
+                        <div class="setting-row-label">🔁 틀린 문제 즉시 재출제</div>
+                        <div class="setting-row-sub">오답 3문제 후 동일 문제 다시 등장</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="autoRequeueToggle" onchange="autoRequeue=this.checked;localStorage.setItem('autoRequeue_v1',this.checked)">
+                        <div class="toggle-track"><div class="toggle-thumb"></div></div>
+                    </label>
+                </div>
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding:4px 0">
                     <label style="font-size:0.87em;color:var(--text-sub);display:flex;align-items:center;gap:6px;cursor:pointer">
                         <input type="checkbox" id="timeLimitToggle" onchange="handleTimeLimitToggle()" style="width:16px;height:16px;accent-color:var(--primary)">
@@ -3328,6 +3351,14 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
 
             <!-- ===== 관리 탭 ===== -->
             <div class="settings-tab-pane" id="stab-pane-manage" style="display:none">
+
+            <!-- 📦 문제집 관리 -->
+            <div style="margin-bottom:14px">
+                <div class="section-label">문제집 관리</div>
+                <div id="workbookManagerList" style="display:flex;flex-direction:column;gap:6px"></div>
+                <button onclick="renderWorkbookManager()" style="width:100%;margin-top:8px;padding:8px;background:none;border:1.5px dashed var(--border);border-radius:10px;font-size:0.82em;font-weight:600;color:var(--text-muted);cursor:pointer" id="wbRefreshBtn">↺ 목록 새로고침</button>
+            </div>
+            <hr class="section-divider">
 
             <!-- ⑦ 관리 메뉴 -->
             <div id="morePanel">
@@ -3384,7 +3415,7 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                     <!-- 앱 설정 -->
                     <div>
                         <div class="section-label">앱 설정</div>
-                        <div class="btn-grid-3 no-select">
+                        <div class="btn-grid-3 no-select" style="margin-bottom:12px">
                             <button class="s-btn" onclick="toggleDarkMode()" id="darkModeBtn">
                                 <span class="s-btn-icon">🌙</span>다크모드
                             </button>
@@ -3394,6 +3425,19 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
                             <button class="s-btn" onclick="openArchiveModal()">
                                 <span class="s-btn-icon">📚</span>오답노트
                             </button>
+                        </div>
+                        <!-- 폰트 크기 슬라이더 -->
+                        <div style="background:var(--bg);border-radius:12px;padding:10px 14px">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                                <span style="font-size:0.87em;font-weight:600;color:var(--text)">🔠 글자 크기</span>
+                                <span style="font-size:0.82em;font-weight:700;color:var(--primary)" id="fontSizeLabel">보통</span>
+                            </div>
+                            <input type="range" id="fontSizeSlider" min="1" max="5" value="3" step="1"
+                                style="width:100%;accent-color:var(--primary);cursor:pointer"
+                                oninput="applyFontSize(this.value)">
+                            <div style="display:flex;justify-content:space-between;font-size:0.72em;color:var(--text-muted);margin-top:4px">
+                                <span>작게</span><span>보통</span><span>크게</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3909,7 +3953,9 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
             <div class="session-stat"><div class="session-stat-num" id="sessCorrect" style="color:var(--success)">0</div><div class="session-stat-label">정답</div></div>
             <div class="session-stat"><div class="session-stat-num" id="sessWrong" style="color:var(--danger)">0</div><div class="session-stat-label">오답</div></div>
         </div>
-        <div id="sessionMsg" style="font-size:0.88em;color:var(--text-sub);margin-bottom:18px;line-height:1.6"></div>
+        <div id="sessionMsg" style="font-size:0.88em;color:var(--text-sub);margin-bottom:12px;line-height:1.6"></div>
+        <!-- 인사이트 카드 -->
+        <div id="sessionInsights" style="text-align:left;margin-bottom:16px;display:flex;flex-direction:column;gap:6px"></div>
         <div class="m-btn-row">
             <button class="m-btn m-btn-default" onclick="document.getElementById('sessionModal').style.display='none'">계속 풀기</button>
             <button class="m-btn m-btn-primary" onclick="resetSession()">새 세션 시작</button>
@@ -3938,12 +3984,31 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
 
 <!-- Jump to question modal -->
 <div id="jumpModal" class="modal-overlay" onclick="if(event.target===this)this.style.display='none'">
-    <div class="modal-box" style="max-width:280px;text-align:center">
-        <h3 style="margin-bottom:6px">📍 문제 이동</h3>
-        <p style="font-size:0.85em;color:var(--text-sub);margin-bottom:14px">이동할 문제 번호를 입력하세요<br>(1 ~ <span id="jumpMaxNum">1</span>)</p>
-        <div class="jump-input-wrap">
-            <input type="number" id="jumpInput" class="jump-input" placeholder="번호 입력" min="1" onkeydown="if(event.key==='Enter')doJump()">
-            <button class="m-btn m-btn-primary" onclick="doJump()">이동</button>
+    <div class="modal-box" style="max-width:300px">
+        <div class="modal-header">
+            <h3 class="modal-title">📍 문제 이동 / 범위 학습</h3>
+            <button class="modal-close" onclick="document.getElementById('jumpModal').style.display='none'">닫기</button>
+        </div>
+        <!-- 문제 이동 -->
+        <div style="margin-bottom:14px">
+            <div style="font-size:0.8em;font-weight:700;color:var(--text-muted);margin-bottom:6px">특정 번호로 이동 (1 ~ <span id="jumpMaxNum">1</span>)</div>
+            <div class="jump-input-wrap">
+                <input type="number" id="jumpInput" class="jump-input" placeholder="번호 입력" min="1" onkeydown="if(event.key==='Enter')doJump()">
+                <button class="m-btn m-btn-primary" onclick="doJump()">이동</button>
+            </div>
+        </div>
+        <!-- 범위 지정 학습 -->
+        <div style="border-top:1px solid var(--border);padding-top:14px">
+            <div style="font-size:0.8em;font-weight:700;color:var(--text-muted);margin-bottom:8px">범위 지정 학습</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                <input type="number" id="rangeFrom" placeholder="시작" min="1"
+                    style="flex:1;padding:8px;border:1.5px solid var(--border);border-radius:10px;font-size:0.95em;background:var(--bg);color:var(--text);outline:none;text-align:center">
+                <span style="color:var(--text-muted);font-weight:700">~</span>
+                <input type="number" id="rangeTo" placeholder="끝" min="1"
+                    style="flex:1;padding:8px;border:1.5px solid var(--border);border-radius:10px;font-size:0.95em;background:var(--bg);color:var(--text);outline:none;text-align:center">
+            </div>
+            <button class="m-btn m-btn-primary" onclick="applyRangeFilter()" style="width:100%">📚 이 범위만 학습</button>
+            <button id="clearRangeBtn" onclick="clearRangeFilter()" style="display:none;width:100%;margin-top:6px;padding:8px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text-sub);font-size:0.85em;font-weight:700;cursor:pointer">✕ 범위 해제</button>
         </div>
     </div>
 </div>
@@ -4286,6 +4351,8 @@ const TITLES = ["입문자","초보자","견습생","숙련공","전문가","베
 let bank = [], filteredIndices = [], currentIndex = 0;
 let isAIMode = false, isShuffleMode = false, currentFilter = 'all';
 let retrySet = new Set(), wrongArchive = [];
+let autoRequeue = false; // 틀린 직후 3문제 후 재출제
+let rangeFilter = null; // 범위 지정 학습 { from, to }
 let activeTags = new Set(), activeSubjects = new Set();
 let selectedWorkbookTags = null; // 문제집 선택 상태 보존용
 let consecutiveWrong = 0;
@@ -4521,6 +4588,10 @@ window.onload = function() {
     darkMode = localStorage.getItem('darkMode_v80') === 'true';
     interleaveMode = localStorage.getItem('interleaveMode_v80') === 'true';
     if(darkMode) { document.body.classList.add('dark-mode'); document.getElementById('darkToggleBtn').innerText='☀️'; }
+    initFontSize();
+    autoRequeue = localStorage.getItem('autoRequeue_v1') === 'true';
+    const arqToggle = document.getElementById('autoRequeueToggle');
+    if(arqToggle) arqToggle.checked = autoRequeue;
     try { document.getElementById('interleaveToggle').checked = interleaveMode; } catch(e) {}
     accuracyHistory2 = JSON.parse(localStorage.getItem('accHistory_v70') || '[]');
     reflectData = JSON.parse(localStorage.getItem('reflectData_v80') || '{"misconception":0,"careless":0,"unknown":0}');
@@ -4711,6 +4782,9 @@ function applyFilter() {
         if(currentFilter==='viewed-unsolved' && !(q.isViewed && !q.my_status)) ok=false;
         if(currentFilter==='review' && !isSRDue(q)) ok=false;
         if(currentFilter==='retry' && !retrySet.has(idx)) ok=false;
+        if(currentFilter==='reflect-misconception' && q.reflectType!=='misconception') ok=false;
+        if(currentFilter==='reflect-careless'      && q.reflectType!=='careless') ok=false;
+        if(currentFilter==='reflect-unknown'       && q.reflectType!=='unknown') ok=false;
         // D: 검색 범위 필터
         if(searchScope === 'bookmark' && !q.bookmark) ok=false;
         if(searchScope === 'memo'     && !(q.memo && q.memo.trim())) ok=false;
@@ -4739,6 +4813,11 @@ function applyFilter() {
     } else {
         indices.sort((a,b)=>a-b);
     }
+    // 범위 필터 적용
+    if(rangeFilter) {
+        const { from, to } = rangeFilter;
+        indices = indices.slice(from - 1, to);
+    }
     // V160: 인터리빙 — 연속 3개 이상 같은 과목 방지 알고리즘 적용
     if(interleaveMode && indices.length > 1) {
         indices = applyInterleaveShuffle(indices);
@@ -4765,6 +4844,9 @@ function updateUI() {
     else if(currentFilter==='viewed-unsolved'){ modeBadge.innerText='📖 읽음+미풀이'; modeBadge.style.cssText='display:inline-block;background:linear-gradient(135deg,#F97316,#EF4444);color:white;padding:3px 7px;border-radius:7px;font-size:0.72em;font-weight:700'; }
     else if(currentFilter==='review'){ modeBadge.innerText='📅 복습'; modeBadge.style.cssText='display:inline-block;background:var(--warning-light);color:#92400E;padding:3px 7px;border-radius:7px;font-size:0.72em;font-weight:700'; }
     else if(isShuffleMode){ modeBadge.innerText='🧠 스마트 셔플'; modeBadge.style.cssText='display:inline-block;background:var(--primary-light);color:var(--primary);padding:3px 7px;border-radius:7px;font-size:0.72em;font-weight:700'; }
+    else if(currentFilter==='reflect-misconception'){ modeBadge.innerText='🔴 개념 오해 모음'; modeBadge.style.cssText='display:inline-block;background:#FEE2E2;color:#991B1B;padding:3px 7px;border-radius:7px;font-size:0.72em;font-weight:700'; }
+    else if(currentFilter==='reflect-careless'){ modeBadge.innerText='🟡 실수 모음'; modeBadge.style.cssText='display:inline-block;background:#FEF3C7;color:#92400E;padding:3px 7px;border-radius:7px;font-size:0.72em;font-weight:700'; }
+    else if(currentFilter==='reflect-unknown'){ modeBadge.innerText='⚪ 처음 봄 모음'; modeBadge.style.cssText='display:inline-block;background:var(--bg);color:var(--text-sub);padding:3px 7px;border-radius:7px;font-size:0.72em;font-weight:700'; }
     else { modeBadge.style.display='none'; }
 
     // Empty state
@@ -4923,7 +5005,15 @@ function updateUI() {
     if(q.my_status){
         fb.classList.remove('hidden');
         document.getElementById('quizAnsText').innerText=q.answer;
-        document.getElementById('quizMemo').value=q.memo||'';
+        const memoEl = document.getElementById('quizMemo');
+        if(memoEl) {
+            memoEl.value = q.memo||'';
+            // 메모 있으면 자동으로 펼침, 없으면 닫기
+            const hasMemo = !!(q.memo && q.memo.trim());
+            memoEl.style.display = hasMemo ? 'block' : 'none';
+            const lbl = document.getElementById('memoToggleLabel');
+            if(lbl) lbl.innerText = hasMemo ? '메모 닫기' : '메모 추가';
+        }
         aiSection.style.display=isAIMode?'block':'none';
         const retryBtn=document.getElementById('btnRetry');
         if(q.my_status==='wrong') retryBtn.classList.remove('hidden');
@@ -5218,10 +5308,10 @@ function endPlanMode() {
 
 function toggleFilter(f) {
     if(currentFilter===f) currentFilter='all'; else currentFilter=f;
-    ['btnWrong','btnBookmark','btnUnanswered','btnUnread','btnViewed','btnViewedUnsolved','btnReview','btnRetryMode'].forEach(id=>{
+    ['btnWrong','btnBookmark','btnUnanswered','btnUnread','btnViewed','btnViewedUnsolved','btnReview','btnRetryMode','btnReflectMisconception','btnReflectCareless','btnReflectUnknown'].forEach(id=>{
         const el=document.getElementById(id); if(el) el.classList.remove('chip-on');
     });
-    const filterMap={wrong:'btnWrong',bookmark:'btnBookmark',unanswered:'btnUnanswered',unread:'btnUnread',viewed:'btnViewed','viewed-unsolved':'btnViewedUnsolved',review:'btnReview',retry:'btnRetryMode'};
+    const filterMap={wrong:'btnWrong',bookmark:'btnBookmark',unanswered:'btnUnanswered',unread:'btnUnread',viewed:'btnViewed','viewed-unsolved':'btnViewedUnsolved',review:'btnReview',retry:'btnRetryMode','reflect-misconception':'btnReflectMisconception','reflect-careless':'btnReflectCareless','reflect-unknown':'btnReflectUnknown'};
     if(filterMap[currentFilter]) document.getElementById(filterMap[currentFilter])?.classList.add('chip-on');
 
     // VER.89: 자동 초기화
@@ -5321,6 +5411,11 @@ function checkAnswer() {
             setTimeout(()=>el.classList.remove('feedback-correct'), 600);
         })();
         if(currentFilter==='retry'){ retrySet.delete(filteredIndices[currentIndex]); updateRetryChip(); }
+        // 자동 재출제: 틀린 문제를 3문제 후에 삽입
+        if(autoRequeue && currentFilter !== 'retry') {
+            const insertAt = Math.min(currentIndex + 3, filteredIndices.length);
+            filteredIndices.splice(insertAt, 0, filteredIndices[currentIndex]);
+        }
     } else {
         userStats.streak=0; addXP(1);
         // 오답 시각 피드백 — 선택 옵션 빨간 shake
@@ -5568,6 +5663,40 @@ function showSessionSummary() {
     else if(acc>=60) msg='📚 절반 이상 맞췄습니다. 틀린 문제 해설을 꼭 확인하세요.';
     else msg='💪 아직 성장 중! 오답 문제들을 집중적으로 복습해보세요.';
     document.getElementById('sessionMsg').innerText=msg;
+
+    // ── 인사이트 카드 ──
+    const insightsEl = document.getElementById('sessionInsights');
+    if(insightsEl) {
+        const insights = [];
+        // 1) 평균 풀이시간
+        const timed = filteredIndices.map(i=>bank[i]).filter(q=>q.solveTime && q.solveTime > 0);
+        if(timed.length > 0) {
+            const avgSec = Math.round(timed.reduce((s,q)=>s+q.solveTime,0)/timed.length);
+            insights.push({ icon:'⏱️', text:`평균 풀이시간 ${avgSec}초` + (avgSec>60?' — 시간 압박 문제 있음':'') });
+        }
+        // 2) 이번 세션 오답 중 개념 오해 비율
+        const sessionWrongQ = filteredIndices.map(i=>bank[i]).filter(q=>q.my_status==='wrong');
+        const misconCount = sessionWrongQ.filter(q=>q.reflectType==='misconception').length;
+        if(misconCount > 0) {
+            insights.push({ icon:'🔴', text:`개념 오해 ${misconCount}문제 — 해설 반드시 재확인` });
+        }
+        // 3) 자주 틀린 과목
+        const subjectWrong = {};
+        sessionWrongQ.forEach(q=>{ const s=q.subject||'미분류'; subjectWrong[s]=(subjectWrong[s]||0)+1; });
+        const topSubject = Object.entries(subjectWrong).sort((a,b)=>b[1]-a[1])[0];
+        if(topSubject && topSubject[1] >= 2) {
+            insights.push({ icon:'📚', text:`[${topSubject[0]}] 집중 복습 필요 (${topSubject[1]}문제 오답)` });
+        }
+        // 4) 연속 정답 최고 기록
+        let maxStreak=0, cur=0;
+        filteredIndices.slice(0,sessionTotal).forEach(i=>{ const q=bank[i]; if(q.my_status==='correct'){cur++;maxStreak=Math.max(maxStreak,cur);}else cur=0; });
+        if(maxStreak >= 5) insights.push({ icon:'🔥', text:`최고 연속 정답 ${maxStreak}개!` });
+
+        insightsEl.innerHTML = insights.length
+            ? insights.map(it=>`<div style="display:flex;align-items:flex-start;gap:8px;background:var(--bg);border-radius:10px;padding:8px 10px;font-size:0.83em;line-height:1.5"><span style="flex-shrink:0">${it.icon}</span><span style="color:var(--text)">${it.text}</span></div>`).join('')
+            : '';
+    }
+
     document.getElementById('sessionModal').style.display='flex';
     if(acc>=80) fireConfetti(false);
     saveAccuracyEntry(acc, sessionTotal);
@@ -5598,6 +5727,15 @@ function updateBadges() {
     setBadge('badgeReview', getSRDueCount());
     setBadge('badgeRetry', retrySet.size);
     updateRetryChip();
+    // 오답 원인 배지
+    const misconCount = bank.filter(q=>q.reflectType==='misconception').length;
+    const carelessCount= bank.filter(q=>q.reflectType==='careless').length;
+    const unknownCount = bank.filter(q=>q.reflectType==='unknown').length;
+    setBadge('badgeReflectMisconception', misconCount);
+    setBadge('badgeReflectCareless', carelessCount);
+    setBadge('badgeReflectUnknown', unknownCount);
+    const reflectRow = document.getElementById('reflectFilterRow');
+    if(reflectRow) reflectRow.style.display = (misconCount+carelessCount+unknownCount > 0) ? 'flex' : 'none';
 
     syncNavFilterBtns();}
 function updateRetryChip() {
@@ -6490,13 +6628,97 @@ function toggleWorkbookCategoryCollapse(field) {
     container.style.display = isHidden ? 'block' : 'none';
     if(arrow) arrow.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(-90deg)';
 }
+
+// ===== 문제집 관리 패널 (관리 탭) =====
+function renderWorkbookManager() {
+    const el = document.getElementById('workbookManagerList');
+    if(!el) return;
+    const tagStats = {};
+    bank.forEach(q => {
+        const t = q.tag || '기타';
+        if(!tagStats[t]) tagStats[t] = { total:0, correct:0, wrong:0 };
+        tagStats[t].total++;
+        if(q.my_status==='correct') tagStats[t].correct++;
+        if(q.my_status==='wrong')   tagStats[t].wrong++;
+    });
+    const tags = Object.keys(tagStats).sort();
+    if(tags.length === 0) {
+        el.innerHTML = '<div style="font-size:0.85em;color:var(--text-muted);text-align:center;padding:14px">로드된 문제집이 없습니다</div>';
+        return;
+    }
+    el.innerHTML = tags.map(tag => {
+        const s = tagStats[tag];
+        const isActive = activeTags.has(tag);
+        const solved = s.correct + s.wrong;
+        const acc = solved > 0 ? Math.round((s.correct / solved) * 100) : 0;
+        const safeTag = tag.replace(/'/g, "\\'");
+        return `<div style="display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:12px;padding:10px 12px">
+            <div style="flex:1;min-width:0">
+                <div style="font-size:0.88em;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${tag}</div>
+                <div style="font-size:0.74em;color:var(--text-muted);margin-top:2px">${s.total}문제 · 풀이 ${solved} · 정답률 ${solved>0?acc+'%':'-'}</div>
+            </div>
+            <label class="toggle-switch" style="flex-shrink:0">
+                <input type="checkbox" ${isActive?'checked':''} onchange="toggleWorkbookActive('${safeTag}',this.checked)">
+                <div class="toggle-track"><div class="toggle-thumb"></div></div>
+            </label>
+            <button onclick="deleteWorkbookFromManager('${safeTag}')" style="flex-shrink:0;width:30px;height:30px;border-radius:8px;border:none;background:var(--danger-light);color:var(--danger);font-size:1em;cursor:pointer;display:flex;align-items:center;justify-content:center">🗑</button>
+        </div>`;
+    }).join('');
+}
+function toggleWorkbookActive(tag, active) {
+    if(active) activeTags.add(tag);
+    else activeTags.delete(tag);
+    applyFilter(); updateUI();
+    showToast((active ? '✅ ' : '⏸ ') + tag + (active ? ' 활성화' : ' 비활성화'));
+}
+
+// ===== 문제집 백업 후 삭제 공통 헬퍼 =====
+function backupAndDeleteWorkbook(tag, afterDelete) {
+    const targetBank = bank.filter(q => q.tag === tag);
+    const backupData = {
+        version: 'workbook-backup',
+        timestamp: new Date().toISOString(),
+        tag: tag,
+        bank: targetBank
+    };
+    const jsonStr = JSON.stringify(backupData, null, 2);
+    const filename = `합격마스터_${tag}_${new Date().toISOString().slice(0,10)}.json`;
+    try {
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click();
+        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 500);
+    } catch(e) {
+        const a = document.createElement('a');
+        a.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(jsonStr);
+        a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+    bank = bank.filter(q => q.tag !== tag);
+    activeTags.delete(tag);
+    activeSubjects = new Set(bank.map(q => q.subject || '미분류(공통)'));
+    _quotaWarningShown = false;
+    saveData(); applyFilter(); updateUI();
+    showToast(`💾 "${tag}" 백업 저장 후 삭제됨`, 'success');
+    if(typeof afterDelete === 'function') afterDelete();
+}
+
+function deleteWorkbookFromManager(tag) {
+    const count = bank.filter(q => q.tag === tag).length;
+    showConfirm(`🗑 "${tag}" (${count}문제)를 삭제합니다.\n풀이 기록을 백업 파일로 저장한 뒤 삭제됩니다.`, () => {
+        backupAndDeleteWorkbook(tag, () => {
+            renderWorkbookManager();
+        });
+    }, null, true);
+}
+
 function deleteWorkbook(tagToRemove) {
-    showConfirm('🗑 문제집 삭제\n"'+tagToRemove+'" 문제집을 삭제합니다.\n계속하시겠습니까?',()=>{
-        bank=bank.filter(q=>(q.tag||'기타')!==tagToRemove);
-        if(activeTags.has(tagToRemove)) activeTags.delete(tagToRemove);
-        saveData(); initActiveTagsAndSubjects(); applyFilter(); updateUI();
-        document.getElementById('workbookModal').style.display='none'; showToast('삭제되었습니다.');
-    },null,true);
+    showConfirm('🗑 문제집 삭제\n"'+tagToRemove+'" 문제집을 삭제합니다.\n풀이 기록을 백업 파일로 저장한 뒤 삭제됩니다.', () => {
+        backupAndDeleteWorkbook(tagToRemove, () => {
+            initActiveTagsAndSubjects(); applyFilter(); updateUI();
+            document.getElementById('workbookModal').style.display='none';
+        });
+    }, null, true);
 }
 function checkAllWorkbooks(b) { document.querySelectorAll('#workbookList input').forEach(c=>c.checked=b); }
 function applyWorkbookSelection() {
@@ -6677,24 +6899,108 @@ function switchDashTab(tab) {
    HELPERS
 ============================================================ */
 // 로컬 저장만 (내부용)
+let _quotaWarningShown = false; // 동일 세션 중복 경고 방지
+
 function saveDataLocal() {
     try {
         const bankStr = JSON.stringify(bank);
         const statsStr = JSON.stringify(userStats);
-        // 저장 전 용량 경고 (4MB 초과 시)
         const totalBytes = (bankStr.length + statsStr.length) * 2;
-        if(totalBytes > 4 * 1024 * 1024) {
-            showToast('⚠️ 저장 공간이 4MB를 초과했습니다. 백업 후 일부 문제집을 삭제해주세요.', 'warning');
+        if(totalBytes > 4 * 1024 * 1024 && !_quotaWarningShown) {
+            _quotaWarningShown = true;
+            showStorageWarning(totalBytes);
         }
         localStorage.setItem('quizData_v50', bankStr);
         localStorage.setItem('userStats_v50', statsStr);
     } catch(e) {
         if(e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
-            showToast('❌ 저장 공간이 가득 찼습니다! 백업 후 일부 문제집을 삭제해주세요.', 'warning');
+            showStorageWarning(null, true); // 실제 꽉 참
         } else {
             console.error('saveDataLocal 오류:', e);
         }
     }
+}
+
+function showStorageWarning(bytes, isFull) {
+    const mb = bytes ? (bytes / 1024 / 1024).toFixed(1) : '?';
+    const title = isFull ? '❌ 저장 공간이 가득 찼습니다!' : `⚠️ 저장 공간 ${mb}MB 초과`;
+    const msg = isFull
+        ? '새로운 풀이 기록이 저장되지 않고 있습니다.\n지금 바로 정리하지 않으면 데이터가 유실될 수 있습니다.'
+        : '계속 사용하면 저장이 실패할 수 있습니다.\n자동 정리 또는 직접 관리를 선택해주세요.';
+    showStorageActionDialog(title, msg);
+}
+
+function showStorageActionDialog(title, msg) {
+    // 기존 다이얼로그 있으면 제거
+    const existing = document.getElementById('storageActionDialog');
+    if(existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'storageActionDialog';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    overlay.innerHTML = `
+        <div style="background:var(--surface);border-radius:20px;padding:22px;max-width:320px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.25)">
+            <div style="font-size:1.05em;font-weight:800;color:var(--text);margin-bottom:8px">${title}</div>
+            <div style="font-size:0.85em;color:var(--text-sub);line-height:1.6;margin-bottom:18px">${msg}</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+                <button onclick="autoCleanStorage()" style="width:100%;padding:13px;background:var(--primary);color:white;border:none;border-radius:12px;font-size:0.92em;font-weight:800;cursor:pointer">
+                    🧹 자동 정리 (백업 후 삭제)
+                </button>
+                <button onclick="switchSettingsTab('manage');openSettingsSheet();document.getElementById('storageActionDialog').remove()" style="width:100%;padding:11px;background:var(--bg);color:var(--text);border:1.5px solid var(--border);border-radius:12px;font-size:0.88em;font-weight:700;cursor:pointer">
+                    🗂 직접 관리 (관리 탭 열기)
+                </button>
+                <button onclick="document.getElementById('storageActionDialog').remove()" style="width:100%;padding:9px;background:none;border:none;font-size:0.83em;color:var(--text-muted);cursor:pointer">
+                    나중에 하기
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+}
+
+function autoCleanStorage() {
+    // 태그별 (풀이 수 기준) 가장 덜 푼 문제집 1개 선택
+    const tagStats = {};
+    bank.forEach(q => {
+        const t = q.tag || '기타';
+        if(!tagStats[t]) tagStats[t] = { total:0, solved:0 };
+        tagStats[t].total++;
+        if(q.my_status) tagStats[t].solved++;
+    });
+    const tags = Object.keys(tagStats);
+    if(tags.length === 0) { showToast('삭제할 문제집이 없습니다.'); return; }
+
+    // 풀이율 낮은 순으로 정렬 → 가장 덜 풀린 문제집 대상
+    tags.sort((a,b) => (tagStats[a].solved/tagStats[a].total) - (tagStats[b].solved/tagStats[b].total));
+    const target = tags[0];
+    const targetBank = bank.filter(q => q.tag === target);
+
+    // 1) 해당 문제집 먼저 백업 다운로드
+    const backupData = { version:'auto-clean', timestamp:new Date().toISOString(), bank: targetBank };
+    const jsonStr = JSON.stringify(backupData, null, 2);
+    const filename = `합격마스터_자동백업_${target}_${new Date().toISOString().slice(0,10)}.json`;
+    try {
+        const blob = new Blob([jsonStr], { type:'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href=url; a.download=filename;
+        document.body.appendChild(a); a.click();
+        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 500);
+    } catch(e) {
+        const a = document.createElement('a');
+        a.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(jsonStr);
+        a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+
+    // 2) 삭제
+    bank = bank.filter(q => q.tag !== target);
+    activeTags.delete(target);
+    activeSubjects = new Set(bank.map(q => q.subject || '미분류(공통)'));
+    _quotaWarningShown = false; // 다음 저장 시 재체크 허용
+    saveData(); applyFilter(); updateUI();
+    if(typeof renderWorkbookManager === 'function') renderWorkbookManager();
+
+    document.getElementById('storageActionDialog')?.remove();
+    showToast(`✅ "${target}" 백업 후 삭제됨. 저장 공간 확보 완료.`, 'success');
 }
 
 // V160: 디바운스 배치 저장 — 연속 호출 시 마지막 호출만 실행 (성능 최적화)
@@ -7174,6 +7480,7 @@ function switchSettingsTab(tab) {
         if(item) item.classList.toggle('active', t === tab);
         if(pane) pane.style.display = (t === tab) ? 'block' : 'none';
     });
+    if(tab === 'manage') renderWorkbookManager();
 }
 
 
@@ -7653,7 +7960,42 @@ function _toggleDashPanel_orig() {
 /* ============================================================
    VER.80 — DARK MODE
 ============================================================ */
-function toggleDarkMode() { /* Lite */ }
+
+// ===== 폰트 크기 슬라이더 =====
+const FONT_STEPS = [
+    { label:'매우 작게', base:'13px', q:'1.0em',  opt:'0.9em',  exp:'0.88em' },
+    { label:'작게',      base:'14px', q:'1.05em', opt:'0.93em', exp:'0.9em'  },
+    { label:'보통',      base:'16px', q:'1.15em', opt:'1.0em',  exp:'0.97em' },
+    { label:'크게',      base:'17px', q:'1.25em', opt:'1.08em', exp:'1.03em' },
+    { label:'매우 크게', base:'18px', q:'1.35em', opt:'1.15em', exp:'1.08em' },
+];
+function applyFontSize(step) {
+    const s = FONT_STEPS[step - 1];
+    if(!s) return;
+    const root = document.documentElement.style;
+    root.setProperty('--fs-base', s.base);
+    root.setProperty('--fs-question', s.q);
+    root.setProperty('--fs-option', s.opt);
+    root.setProperty('--fs-exp', s.exp);
+    const lbl = document.getElementById('fontSizeLabel');
+    if(lbl) lbl.innerText = s.label;
+    localStorage.setItem('fontSizeStep_v1', step);
+}
+function initFontSize() {
+    const saved = parseInt(localStorage.getItem('fontSizeStep_v1') || '3');
+    const slider = document.getElementById('fontSizeSlider');
+    if(slider) slider.value = saved;
+    applyFontSize(saved);
+}
+function toggleDarkMode() {
+    darkMode = !darkMode;
+    document.body.classList.toggle('dark-mode', darkMode);
+    const btn = document.getElementById('darkToggleBtn');
+    if(btn) btn.innerText = darkMode ? '☀️' : '🌙';
+    const modeBtn = document.getElementById('darkModeBtn');
+    if(modeBtn) modeBtn.querySelector('.s-btn-icon').innerText = darkMode ? '☀️' : '🌙';
+    localStorage.setItem('darkMode_v80', darkMode);
+}
 
 /* ============================================================
    VER.80 — MEMORY STRENGTH
@@ -7799,7 +8141,18 @@ function rateConfidence(quality) {
 /* ============================================================
    VER.80 — WRONG ANSWER REFLECTION (메타인지)
 ============================================================ */
-function recordReflect(type) { /* Lite */ }
+function recordReflect(type) {
+    if(!filteredIndices.length) return;
+    const q = bank[filteredIndices[currentIndex]];
+    if(!q) return;
+    q.reflectType = type;
+    // 버튼 시각 피드백
+    document.querySelectorAll('.reflect-btn').forEach(btn => btn.style.opacity='0.5');
+    const map = { misconception:'🔴', careless:'🟡', unknown:'⚪' };
+    const labels = { misconception:'개념 오해', careless:'실수', unknown:'처음 봄' };
+    showToast(map[type] + ' ' + (labels[type]||type) + ' 기록됨');
+    saveData();
+}
 
 /* ============================================================
    VER.80 — BRAIN BREAK
