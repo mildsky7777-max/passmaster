@@ -4069,6 +4069,17 @@ body.dark-mode .wrong-compare-correct { background: #052E16; border-color: #1665
             </div>
             <!-- 문제집 통계 카드 -->
             <div id="mockFieldStats" style="display:none;margin-bottom:14px;background:var(--bg);border-radius:12px;padding:12px 14px;border:1.5px solid var(--border)"></div>
+            <!-- 과목 선택 (체크박스) -->
+            <div id="mockSubjectFilterWrap" style="display:none;margin-bottom:14px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                    <label style="font-size:0.85em;font-weight:700;color:var(--text-sub)">📚 출제 과목 선택</label>
+                    <div style="display:flex;gap:6px">
+                        <button onclick="mockSelectAllSubjects(true)"  style="font-size:0.75em;padding:3px 8px;border-radius:7px;border:1px solid var(--border);background:var(--bg);color:var(--text-sub);cursor:pointer;font-weight:700">전체</button>
+                        <button onclick="mockSelectAllSubjects(false)" style="font-size:0.75em;padding:3px 8px;border-radius:7px;border:1px solid var(--border);background:var(--bg);color:var(--text-sub);cursor:pointer;font-weight:700">해제</button>
+                    </div>
+                </div>
+                <div id="mockSubjectCheckList" style="display:flex;flex-direction:column;gap:5px"></div>
+            </div>
             <!-- 과목별 문제 수 지정 -->
             <div style="margin-bottom:14px" id="mockSubjectQuotaWrap">
                 <!-- 총 문제 수 입력 -->
@@ -8486,8 +8497,13 @@ let mockQuestions=[],mockIdx=0,mockCorrect=0,mockWrong=0,mockAnswered=false;
 let _mockReturnTab='quiz', _mockReturnIndex=0; // 모의고사 후 복귀 위치
 let mockTimerLimit=0,mockTimerLeft=0,mockTimerInterval=null;
 let mockSelectedField='all';
+let mockSelectedSubjects = new Set(); // 선택된 과목 (빈 Set = 전체)
 // 모의고사 분야/문제집 필터 헬퍼
 function mockFieldMatch(q) {
+    // 과목 필터: 선택된 과목이 있으면 해당 과목만
+    if(mockSelectedSubjects.size > 0) {
+        if(!mockSelectedSubjects.has(q.subject || '미분류')) return false;
+    }
     if(mockSelectedField==='all') return true;
     if(mockSelectedField.startsWith('__tag__')) {
         const tagName = mockSelectedField.slice(7);
@@ -8638,7 +8654,7 @@ function renderMockHistory() {
 function openMockExam() {
     if(bank.length===0){ showToast('문제 데이터가 없습니다.'); return; }
     (async()=>{ await loadMockHistory(); })();
-    mockSelectedField='all'; mockTimerLimit=0; mockTargetTotal=20; mockSubjectQuota={};
+    mockSelectedField='all'; mockTimerLimit=0; mockTargetTotal=20; mockSubjectQuota={}; mockSelectedSubjects=new Set();
 
     // 분야 버튼 — fieldMap에 등록된 분야 + 분야 미지정 문제집(tag)도 표시
     const mappedFields=[...new Set(Object.values(fieldMap))].filter(Boolean);
@@ -8668,6 +8684,8 @@ function openMockExam() {
 function setMockField(btn,field){
     document.querySelectorAll('#mockFieldSelect .mock-cnt-btn').forEach(x=>x.classList.remove('active'));
     btn.classList.add('active'); mockSelectedField=field;
+    mockSelectedSubjects = new Set(); // 분야 바뀌면 과목 선택 초기화
+    renderMockSubjectFilter();
     renderMockSubjectQuota();
     renderMockFieldStats();
 }
@@ -8714,8 +8732,76 @@ function renderMockFieldStats() {
         </div>`;
 }
 
+function renderMockSubjectFilter() {
+    // 분야 전체 과목 목록 (mockSelectedSubjects 무시하고 분야만 기준)
+    const allSubjectsInField = [...new Set(
+        bank.filter(q => {
+            if(mockSelectedField==='all') return true;
+            if(mockSelectedField.startsWith('__tag__')) return (q.tag||'기타')===mockSelectedField.slice(7);
+            const f = fieldMap[q.tag||'기타'] || getAutoField(q.tag||'기타');
+            return f === mockSelectedField;
+        }).map(q => q.subject||'미분류')
+    )].filter(Boolean).sort();
+
+    const wrap = document.getElementById('mockSubjectFilterWrap');
+    const list = document.getElementById('mockSubjectCheckList');
+    if(!wrap || !list) return;
+
+    if(allSubjectsInField.length <= 1) {
+        wrap.style.display = 'none';
+        mockSelectedSubjects = new Set();
+        return;
+    }
+    wrap.style.display = 'block';
+
+    // 처음 렌더링 시 전체 선택
+    if(mockSelectedSubjects.size === 0) {
+        allSubjectsInField.forEach(s => mockSelectedSubjects.add(s));
+    }
+
+    list.innerHTML = allSubjectsInField.map(s => {
+        const count = bank.filter(q => {
+            if((q.subject||'미분류') !== s) return false;
+            if(mockSelectedField==='all') return true;
+            if(mockSelectedField.startsWith('__tag__')) return (q.tag||'기타')===mockSelectedField.slice(7);
+            const f = fieldMap[q.tag||'기타'] || getAutoField(q.tag||'기타');
+            return f === mockSelectedField;
+        }).length;
+        const checked = mockSelectedSubjects.has(s) ? 'checked' : '';
+        const safeId = 'msc-' + s.replace(/[^a-zA-Z0-9가-힣]/g,'_');
+        return `<label style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border-radius:10px;cursor:pointer;font-size:0.88em;font-weight:600;color:var(--text)">
+            <input type="checkbox" id="${safeId}" value="${s}" ${checked}
+                style="width:16px;height:16px;accent-color:var(--primary);flex-shrink:0"
+                onchange="mockToggleSubject('${s.replace(/'/g,"\\'")}', this.checked)">
+            <span style="flex:1">${s}</span>
+            <span style="font-size:0.75em;color:var(--text-muted)">${count}문제</span>
+        </label>`;
+    }).join('');
+}
+
+function mockToggleSubject(subject, checked) {
+    if(checked) mockSelectedSubjects.add(subject);
+    else mockSelectedSubjects.delete(subject);
+    renderMockSubjectFilter();
+    renderMockSubjectQuota();
+}
+
+function mockSelectAllSubjects(all) {
+    const allSubjectsInField = [...new Set(
+        bank.filter(q => {
+            if(mockSelectedField==='all') return true;
+            if(mockSelectedField.startsWith('__tag__')) return (q.tag||'기타')===mockSelectedField.slice(7);
+            const f = fieldMap[q.tag||'기타'] || getAutoField(q.tag||'기타');
+            return f === mockSelectedField;
+        }).map(q => q.subject||'미분류')
+    )].filter(Boolean);
+    mockSelectedSubjects = all ? new Set(allSubjectsInField) : new Set();
+    renderMockSubjectFilter();
+    renderMockSubjectQuota();
+}
+
 function renderMockSubjectQuota() {
-    // 현재 선택된 분야의 과목 목록 추출
+    // 현재 선택된 분야+과목의 과목 목록 추출
     const subjects=[...new Set(bank.filter(q=>{
         return mockFieldMatch(q);
     }).map(q=>q.subject||'미분류'))].filter(Boolean).sort();
